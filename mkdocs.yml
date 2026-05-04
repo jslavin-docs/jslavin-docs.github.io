@@ -1,0 +1,83 @@
+site_name: Jeff Slavin | Technical Writing Portfolio
+site_url: https://jslavin-docs.github.io/
+site_description: Technical writing portfolio for Jeff Slavin, a documentation lead specializing in API, cloud, edge, IoT, GitOps, and DevSecOps documentation.
+site_author: Jeff Slavin
+repo_name: jslavin-docs/jslavin-docs.github.io
+repo_url: https://github.com/jslavin-docs/jslavin-docs.github.io
+edit_uri: ""
+
+copyright: Copyright &copy; 2026 Jeff Slavin
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: Roboto Mono
+  logo: assets/jeff-slavin.jpg
+  favicon: assets/jeff-slavin.jpg
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - toc.integrate
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Portfolio: portfolio.md
+  - Resume: resume.md
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/jeff-slavin
+      name: LinkedIn
+    - icon: fontawesome/brands/github
+      link: https://github.com/jslavin-docs
+      name: GitHub
+    - icon: material/email
+      link: mailto:jslavin.docs@gmail.com
+      name: Email
+
+extra_css:
+  - assets/custom.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
