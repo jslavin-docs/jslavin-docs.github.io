@@ -56,5 +56,4 @@ A focused set of live technical writing samples covering API documentation, deve
   </article>
 </div>
 
-!!! note "Additional samples"
-    Additional examples are available on request, including DevSecOps runbooks, GitOps architecture documentation, administrator guides, and Web3 credentialing documentation.
+
