@@ -1,0 +1,53 @@
+site_name: Jeff Slavin | Technical Writer and Documentation Lead
+site_description: Portfolio and resume for Jeff Slavin, a technical writer and documentation lead specializing in API, cloud, edge, DevSecOps, Docs as Code, and information architecture.
+site_url: https://jslavin-docs.github.io/
+
+repo_url: https://github.com/jslavin-docs/jslavin-docs.github.io
+repo_name: GitHub
+
+theme:
+  name: material
+  language: en
+  palette:
+    scheme: default
+    primary: indigo
+    accent: indigo
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - Portfolio: portfolio.md
+  - Resume: resume.md
+
+extra_css:
+  - assets/custom.css
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/jslavin-docs
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/jeff-slavin

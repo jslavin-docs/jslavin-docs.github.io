@@ -1,0 +1,26 @@
+# Python / MkDocs
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.cache/
+site/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Keep source/private materials out of the public portfolio repo
+*.docx
+*.pdf
+*.pptx
+*.xlsx
+*.zip
+*resume*
+*Resume*
+*writing-samples*
+*Writing-Samples*
+*private*
