@@ -1,6 +1,6 @@
 # Portfolio
 
-A focused set of live technical writing samples covering API documentation, developer onboarding, cloud-to-IoT migration, and edge computing. Each sample explains the audience problem, technical scope, and business outcome.
+A focused set of live technical writing samples covering API documentation, developer onboarding, cloud-to-IoT migration, and edge computing. Each sample highlights the technical scope, intended audience, and business context.
 
 ## API & Developer Documentation
 
