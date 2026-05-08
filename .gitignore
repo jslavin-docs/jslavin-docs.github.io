@@ -1,9 +1,18 @@
 site/
+.cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 .venv/
 venv/
-__pycache__/
+.env
+.pytest_cache/
+.mypy_cache/
 .DS_Store
+.vscode/
+.idea/
 
-# Private/local resume source files only
+# Private/local resume source files only; public PDF lives in docs/assets/
 /Jeff-Slavin-Resume*.docx
 /Jeff-Slavin-Resume*.pdf
