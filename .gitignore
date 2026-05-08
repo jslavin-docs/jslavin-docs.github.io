@@ -1,26 +1,9 @@
-# Python / MkDocs
+site/
 .venv/
 venv/
-env/
 __pycache__/
-*.py[cod]
-.cache/
-site/
-
-# OS / editor
 .DS_Store
-Thumbs.db
-.vscode/
-.idea/
 
-# Keep source/private materials out of the public portfolio repo
-*.docx
-*.pdf
-*.pptx
-*.xlsx
-*.zip
-*resume*
-*Resume*
-*writing-samples*
-*Writing-Samples*
-*private*
+# Private/local resume source files only
+/Jeff-Slavin-Resume*.docx
+/Jeff-Slavin-Resume*.pdf
