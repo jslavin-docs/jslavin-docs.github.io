@@ -1,4 +1,4 @@
-# Jeff Slavin
+# Jeff Slavin { .resume-page-title }
 
 **Technical Writer & Documentation Lead**  
 Miami, FL · [jslavin.docs@gmail.com](mailto:jslavin.docs@gmail.com) · [LinkedIn](https://www.linkedin.com/in/jeff-slavin) · [GitHub](https://github.com/jslavin-docs)

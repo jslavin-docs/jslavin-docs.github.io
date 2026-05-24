@@ -150,7 +150,8 @@
 .feature-card p,
 .portfolio-card p {
   margin: 0;
-  color: var(--md-default-fg-color--light);
+  color: #222;
+  font-weight: 400;
   line-height: 1.55;
 }
 
@@ -308,11 +309,11 @@
 
 
 
-/* Resume page readability */
+/* Resume page readability: use Material theme variables instead of hard-coded black. */
 .md-typeset h1,
 .md-typeset h2,
 .md-typeset h3 {
-  color: #000 !important;
+  color: var(--md-default-fg-color);
   font-weight: 700 !important;
 }
 
@@ -321,21 +322,147 @@
 }
 
 .md-typeset h1 + p {
-  color: #000 !important;
+  color: var(--md-default-fg-color);
   font-weight: 400 !important;
 }
 
 .md-typeset h1 + p strong {
-  color: #000 !important;
+  color: var(--md-default-fg-color);
   font-weight: 700 !important;
 }
 
 .md-typeset h3 + p strong {
-  color: #000 !important;
+  color: var(--md-default-fg-color);
   font-weight: 700 !important;
 }
 
 /* Keep resume contact links normal weight */
 .md-typeset h1 + p a {
   font-weight: 400 !important;
+}
+/* Show heading permalink icons only on hover or keyboard focus. */
+.md-typeset h1 .headerlink,
+.md-typeset h2 .headerlink,
+.md-typeset h3 .headerlink,
+.md-typeset h4 .headerlink,
+.md-typeset h5 .headerlink,
+.md-typeset h6 .headerlink {
+  opacity: 0 !important;
+  transition: opacity .15s ease;
+}
+
+.md-typeset h1:hover .headerlink,
+.md-typeset h2:hover .headerlink,
+.md-typeset h3:hover .headerlink,
+.md-typeset h4:hover .headerlink,
+.md-typeset h5:hover .headerlink,
+.md-typeset h6:hover .headerlink,
+.md-typeset .headerlink:focus,
+.md-typeset .headerlink:focus-visible {
+  opacity: 1 !important;
+}
+
+
+/* Slightly increase table readability without making wide tables too cramped. */
+.md-typeset table:not([class]) {
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+
+/* Slightly increase admonition/callout readability. */
+.md-typeset .admonition,
+.md-typeset details {
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+
+/* Improve homepage/card readability and keep card body text regular weight. */
+.metric-card p,
+.skill-card p,
+.feature-card p,
+.portfolio-card p {
+  color: #222;
+  font-weight: 400;
+}
+
+/* Keep full-card links clean while preserving clear click behavior. */
+.md-typeset a.feature-card,
+.md-typeset a.portfolio-card {
+  color: inherit;
+  font-weight: inherit;
+}
+
+.md-typeset a.feature-card:hover,
+.md-typeset a.portfolio-card:hover {
+  text-decoration: none;
+}
+
+.portfolio-card .card-link,
+.feature-card .card-link {
+  color: var(--md-primary-fg-color);
+  font-weight: 600;
+}
+
+
+/* Keep card CTAs visually clear on homepage and portfolio cards. */
+.portfolio-card .card-link,
+.feature-card .card-link {
+  display: inline-flex;
+  margin-top: .9rem;
+  color: var(--md-primary-fg-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+
+/* Resume-only spacing. Add { .resume-page-title } to the first H1 in docs/resume.md. */
+.md-typeset h1.resume-page-title {
+  margin-bottom: 0.65rem;
+}
+
+.md-typeset h1.resume-page-title + p {
+  margin-top: 0.35rem;
+}
+
+.md-typeset h1.resume-page-title ~ h2 {
+  margin-top: 1.575rem;
+  margin-bottom: 0.675rem;
+}
+
+.md-typeset h1.resume-page-title ~ hr {
+  margin: 1.425rem 0;
+}
+
+
+/* Homepage-only spacing: 20% more breathing room between the name and hero card. */
+.md-typeset h1.home-page-title {
+  margin-bottom: 1.518rem;
+}
+
+.md-typeset h1.home-page-title + .hero-card {
+  margin-top: 1.122rem;
+}
+
+
+/* Portfolio-only spacing: make the title-to-intro gap feel consistent with the homepage. */
+.md-typeset h1.portfolio-page-title {
+  margin-bottom: 1.25rem;
+}
+
+.md-typeset h1.portfolio-page-title + p {
+  margin-top: 0;
+}
+
+
+/* Keep one-card portfolio rows from stretching too wide. */
+.portfolio-grid.single-row {
+  grid-template-columns: minmax(270px, 520px);
+}
+
+@media screen and (max-width: 640px) {
+  .portfolio-grid.single-row {
+    grid-template-columns: 1fr;
+  }
 }

@@ -26,6 +26,10 @@ nav:
   - Portfolio: portfolio.md
   - Resume: resume.md
 
+not_in_nav: |
+  /writing-samples/novadeploy-gitops-admin-guide-portfolio-cut.md
+  /writing-samples/novadeploy-gitops-admin-guide-full-version.md
+
 extra_css:
   - assets/custom.css
 

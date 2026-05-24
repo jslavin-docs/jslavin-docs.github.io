@@ -1,4 +1,4 @@
-# Jeff Slavin
+# Jeff Slavin { .home-page-title }
 
 <div class="hero-card">
   <div class="hero-photo-wrap">
@@ -56,20 +56,30 @@
 ## Featured work
 
 <div class="feature-grid">
+  <a class="feature-card" href="portfolio/#gitops-devsecops-documentation">
+    <span class="card-tag">EKS · Argo CD · GitOps · DevSecOps</span>
+    <h3>GitOps and DevSecOps documentation</h3>
+    <p>EKS and Argo CD operator guidance showing deployment controls, secret-handling rules, verification checks, and rollback decisions.</p>
+    <span class="card-link">View samples →</span>
+  </a>
+
   <a class="feature-card" href="portfolio/#api-developer-documentation">
     <span class="card-tag">OpenAPI · REST · Webhooks</span>
     <h3>API and developer documentation</h3>
     <p>Interactive API references, query schema docs, webhook payload guides, and SDK-generation workflows.</p>
+    <span class="card-link">View samples →</span>
   </a>
   <a class="feature-card" href="portfolio/#end-user-onboarding-documentation">
     <span class="card-tag">Migration · Quick Start</span>
     <h3>End-user and onboarding documentation</h3>
     <p>Step-by-step migration and onboarding content that helps technical users self-serve.</p>
+    <span class="card-link">View sample →</span>
   </a>
   <a class="feature-card" href="portfolio/#edge-computing-documentation">
     <span class="card-tag">Edge · Architecture · Tutorial</span>
     <h3>Edge computing documentation</h3>
     <p>Platform overviews, architecture guidance, and deployment tutorials for edge environments.</p>
+    <span class="card-link">View samples →</span>
   </a>
 </div>
 

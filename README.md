@@ -41,8 +41,9 @@ jslavin-docs.github.io/
 ├── .github/workflows/pages.yml   # GitHub Actions workflow for build/deploy
 ├── docs/                         # Markdown source files and assets
 │   ├── index.md                  # Portfolio homepage
-│   ├── portfolio.md              # Writing samples
+│   ├── portfolio.md              # Writing samples overview
 │   ├── resume.md                 # Resume page
+│   ├── writing-samples/          # Markdown portfolio samples
 │   └── assets/                   # Custom CSS, PDFs, and images
 ├── mkdocs.yml                    # MkDocs Material configuration
 ├── requirements.txt              # Python dependencies
