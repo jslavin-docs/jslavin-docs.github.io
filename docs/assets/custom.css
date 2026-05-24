@@ -99,13 +99,13 @@
 .button.primary,
 .md-typeset a.button.primary {
   background: var(--md-primary-fg-color);
-  color: var(--md-primary-bg-color) !important;
+  color: var(--md-primary-bg-color);
 }
 
 .button.secondary,
 .md-typeset a.button.secondary {
   background: color-mix(in srgb, var(--md-default-bg-color) 82%, var(--md-primary-fg-color));
-  color: var(--md-primary-fg-color) !important;
+  color: var(--md-primary-fg-color);
 }
 
 .metric-grid,
@@ -150,7 +150,7 @@
 .feature-card p,
 .portfolio-card p {
   margin: 0;
-  color: #222;
+  color: var(--md-default-fg-color);
   font-weight: 400;
   line-height: 1.55;
 }
@@ -179,7 +179,7 @@
 .feature-card,
 .portfolio-card {
   padding: 1.25rem;
-  text-decoration: none !important;
+  text-decoration: none;
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
 
@@ -208,11 +208,7 @@
   line-height: 1.25;
 }
 
-.portfolio-card .card-link {
-  display: inline-flex;
-  margin-top: .9rem;
-  text-decoration: none;
-}
+
 
 .resume-shell {
   padding: 1.3rem 1.5rem;
@@ -314,31 +310,31 @@
 .md-typeset h2,
 .md-typeset h3 {
   color: var(--md-default-fg-color);
-  font-weight: 700 !important;
+  font-weight: 700;
 }
 
 .md-typeset h1 {
-  font-size: 2.1rem !important;
+  font-size: 2.1rem;
 }
 
 .md-typeset h1 + p {
   color: var(--md-default-fg-color);
-  font-weight: 400 !important;
+  font-weight: 400;
 }
 
 .md-typeset h1 + p strong {
   color: var(--md-default-fg-color);
-  font-weight: 700 !important;
+  font-weight: 700;
 }
 
 .md-typeset h3 + p strong {
   color: var(--md-default-fg-color);
-  font-weight: 700 !important;
+  font-weight: 700;
 }
 
 /* Keep resume contact links normal weight */
 .md-typeset h1 + p a {
-  font-weight: 400 !important;
+  font-weight: 400;
 }
 /* Show heading permalink icons only on hover or keyboard focus. */
 .md-typeset h1 .headerlink,
@@ -347,7 +343,7 @@
 .md-typeset h4 .headerlink,
 .md-typeset h5 .headerlink,
 .md-typeset h6 .headerlink {
-  opacity: 0 !important;
+  opacity: 0;
   transition: opacity .15s ease;
 }
 
@@ -359,7 +355,7 @@
 .md-typeset h6:hover .headerlink,
 .md-typeset .headerlink:focus,
 .md-typeset .headerlink:focus-visible {
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 
@@ -379,19 +375,14 @@
 
 
 /* Improve homepage/card readability and keep card body text regular weight. */
-.metric-card p,
-.skill-card p,
-.feature-card p,
-.portfolio-card p {
-  color: #222;
-  font-weight: 400;
-}
+
 
 /* Keep full-card links clean while preserving clear click behavior. */
 .md-typeset a.feature-card,
 .md-typeset a.portfolio-card {
   color: inherit;
   font-weight: inherit;
+  text-decoration: none;
 }
 
 .md-typeset a.feature-card:hover,
@@ -399,14 +390,14 @@
   text-decoration: none;
 }
 
-.portfolio-card .card-link,
-.feature-card .card-link {
-  color: var(--md-primary-fg-color);
-  font-weight: 600;
-}
+
 
 
 /* Keep card CTAs visually clear on homepage and portfolio cards. */
+
+
+
+/* Card CTA links. */
 .portfolio-card .card-link,
 .feature-card .card-link {
   display: inline-flex;
@@ -415,7 +406,6 @@
   font-weight: 600;
   text-decoration: none;
 }
-
 
 /* Resume-only spacing. Add { .resume-page-title } to the first H1 in docs/resume.md. */
 .md-typeset h1.resume-page-title {
