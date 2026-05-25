@@ -7,10 +7,10 @@ API • Cloud • Edge • IoT • GitOps • DevSecOps • Docs as Code
 
 This repository contains the source for my technical writing portfolio, built with MkDocs Material and published with GitHub Pages. It demonstrates the same Docs as Code practices I use professionally: Markdown authoring, YAML configuration, Git version control, local build checks, and GitHub Actions automation.
 
-**Live portfolio:** https://jslavin-docs.github.io  
-**Resume:** https://jslavin-docs.github.io/resume/
-**LinkedIn:** [jeff-slavin](https://www.linkedin.com/in/jeff-slavin)  
-**Email:** [jslavin.docs@gmail.com](mailto:jslavin.docs@gmail.com)  
+- **Live portfolio:** https://jslavin-docs.github.io/
+- **Resume:** https://jslavin-docs.github.io/resume/
+- **LinkedIn:** https://www.linkedin.com/in/jeff-slavin/
+- **Email:** jslavin.docs@gmail.com  
 
 ## Focus areas
 
