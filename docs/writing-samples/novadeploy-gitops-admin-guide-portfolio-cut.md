@@ -1,6 +1,6 @@
 # NovaDeploy Platform: GitOps Administration Guide - Portfolio Cut
 
-This Markdown sample is a concise portfolio cut of a fictional GitOps administration guide. It highlights the deployment path, safety controls, verification pattern, and rollback logic without requiring a long runbook read.
+This writing sample is a concise portfolio cut of a fictional GitOps administration guide. It highlights the deployment path, safety controls, verification pattern, and rollback logic without requiring a long runbook read.
 
 *Deploying Services to Amazon EKS with Argo CD*  
 Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
@@ -12,6 +12,11 @@ Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 
 !!! info "Positioning"
     This cut is designed for a 2-3 minute reviewer skim. It preserves the deployment path, core safety controls, architecture, verification pattern, and rollback decision logic while moving long command transcripts and full Terraform detail to the extended runbook.
+
+!!! info "Scope and Audience"
+    **Scope:** Shows a reviewer-oriented deployment path for a fictional production service on Amazon EKS using Argo CD, Terraform-managed IAM/KMS/Secrets Manager metadata, External Secrets Operator, and Reloader. It summarizes guardrails, verification, and rollback logic; it does not include full command transcripts or complete Terraform examples.
+
+    **Audience:** Technical writing reviewers, engineering managers, platform engineers, and DevOps/SRE reviewers who want to evaluate GitOps, cloud, Kubernetes, and DevSecOps documentation depth in a short read.
 
 ## 1. Reviewer Summary
 

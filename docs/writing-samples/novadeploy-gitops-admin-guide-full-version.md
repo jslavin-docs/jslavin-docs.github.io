@@ -1,6 +1,6 @@
 # NovaDeploy Platform: GitOps Administration Guide
 
-This Markdown sample is the full fictional operator runbook for deploying services to Amazon EKS with Argo CD. It shows how complex EKS, IAM, KMS, secrets, GitOps, and rollback workflows can be turned into prescriptive production guidance.
+This writing sample is the full fictional operator runbook for deploying services to Amazon EKS with Argo CD. It shows how complex EKS, IAM, KMS, secrets, GitOps, and rollback workflows can be turned into prescriptive production guidance.
 
 *Deploying Services to Amazon EKS with Argo CD*  
 Version 1.0 | Status: Full runbook | Written by: Jeff Slavin
@@ -12,6 +12,11 @@ Version 1.0 | Status: Full runbook | Written by: Jeff Slavin
 
 !!! info "Document Purpose"
     This full runbook shows how a documentation lead can turn a complex EKS/GitOps/DevSecOps workflow into prescriptive operator guidance: one source of truth, clear stop points, auditable checks, and safe rollback paths.
+
+!!! info "Scope and Audience"
+    **Scope:** Provides an operator runbook for deploying and recovering fictional NovaDeploy services on Amazon EKS with Argo CD. It covers GitOps workflow, IAM/KMS/Secrets Manager controls, External Secrets Operator, Reloader, verification, and rollback. It excludes application-code changes, broader incident response, and service-specific business logic.
+
+    **Audience:** Platform engineers, DevOps/SRE operators, cloud engineers, and technical documentation reviewers who need prescriptive production guidance for GitOps-managed Kubernetes services.
 
 ## 1. Quick Start and Stop Conditions
 
