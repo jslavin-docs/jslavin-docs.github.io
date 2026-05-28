@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" aria-labelledby="title desc">
+  <title id="title">JS header logo</title>
+  <desc id="desc">White JS monogram inside a light-blue ring on a transparent background.</desc>
+  <circle cx="12" cy="12" r="10.5" fill="none" stroke="#9CCBFF" stroke-width="1.6"/>
+  <text x="11.9" y="15.9"
+        text-anchor="middle"
+        font-family="Inter, Roboto, Arial, sans-serif"
+        font-size="11.2"
+        font-weight="800"
+        letter-spacing="1.05"
+        fill="#FFFFFF">JS</text>
+</svg>
