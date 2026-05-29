@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jslavin-docs.github.io/sitemap.xml

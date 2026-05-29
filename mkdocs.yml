@@ -1,5 +1,6 @@
 site_name: Jeff Slavin | Senior Technical Writer and Documentation Lead
 site_description: Portfolio and resume for Jeff Slavin, a technical writer and documentation lead specializing in API, cloud, edge, DevSecOps, Docs as Code, and information architecture.
+site_author: Jeff Slavin
 site_url: https://jslavin-docs.github.io/
 
 repo_url: https://github.com/jslavin-docs/jslavin-docs.github.io
@@ -29,6 +30,7 @@ nav:
   - Resume: resume.md
 
 not_in_nav: |
+  /404.md
   /writing-samples/novadeploy-gitops-admin-guide-portfolio-cut.md
   /writing-samples/novadeploy-gitops-admin-guide-full-version.md
 
@@ -50,7 +52,7 @@ markdown_extensions:
 
 plugins:
   - search
-
+  - social
 extra:
   social:
     - icon: fontawesome/brands/github
