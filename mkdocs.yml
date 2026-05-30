@@ -1,5 +1,5 @@
-﻿site_name: Jeff Slavin | Lead Technical Writer
-site_description: Portfolio and resume for Jeff Slavin, a strategic technical writer and documentation lead focused on API, cloud, edge, IoT, GitOps, and DevSecOps documentation.
+site_name: Jeff Slavin | Senior Technical Writer and Documentation Lead
+site_description: Technical writing portfolio and resume for Jeff Slavin, focused on API, cloud, DevSecOps, GitOps, and Docs as Code documentation.
 site_author: Jeff Slavin
 site_url: https://jslavin-docs.github.io/
 
@@ -59,4 +59,3 @@ extra:
       link: https://github.com/jslavin-docs
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/jeff-slavin
-

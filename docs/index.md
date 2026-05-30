@@ -5,8 +5,8 @@
     <img class="hero-photo" src="assets/jeff-slavin.jpg" alt="Professional headshot of Jeff Slavin" />
   </div>
   <div class="hero-copy">
-    <p class="eyebrow">Senior Technical Writer · Documentation Lead</p>
-    <h1>API, cloud, edge, IoT, GitOps, and DevSecOps documentation that helps technical users move faster.</h1>
+    <p class="eyebrow">STRATEGIC TECHNICAL WRITER · DOCUMENTATION LEAD</p>
+    <h1>GitOps, DevSecOps, API, cloud, edge, and IoT documentation that helps technical users move faster.</h1>
     <p class="hero-summary">Clear user and developer documentation for complex API, cloud, edge, IoT, and DevSecOps systems, with a focus on Docs as Code, information architecture, OpenAPI, and scalable self-service content.</p>
     <div class="hero-actions">
       <a class="button primary" href="portfolio/">View portfolio</a>
