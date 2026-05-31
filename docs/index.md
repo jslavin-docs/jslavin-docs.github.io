@@ -1,7 +1,3 @@
----
-description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, DevSecOps, APIs, cloud, edge, IoT, and Docs as Code."
----
-
 # Jeff Slavin { .home-page-title }
 
 <div class="hero-card">

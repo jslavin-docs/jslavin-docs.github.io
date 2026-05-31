@@ -1,7 +1,3 @@
----
-description: "Selected technical writing samples by Jeff Slavin covering GitOps, DevSecOps, APIs, developer onboarding, cloud-to-IoT migration, and edge computing."
----
-
 # Portfolio { .portfolio-page-title }
 
 A focused set of technical writing samples covering GitOps, DevSecOps, APIs, developer onboarding, cloud-to-IoT migration, and edge computing. Each sample highlights the technical scope, intended audience, and business context.
