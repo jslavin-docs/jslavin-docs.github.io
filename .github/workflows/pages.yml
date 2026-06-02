@@ -15,12 +15,15 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -44,9 +47,82 @@ jobs:
         with:
           path: site
 
+  quality:
+    name: Build strict and check internal links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install image-processing system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build site with strict mode
+        run: mkdocs build --strict --site-dir site
+
+      - name: Check internal links
+        run: python scripts/check_internal_links.py site
+
+  lighthouse:
+    name: Lighthouse CI advisory audit
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Set up Node for Lighthouse CI
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install image-processing system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build site with strict mode
+        run: mkdocs build --strict --site-dir site
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.15.x
+
+      - name: Run Lighthouse CI advisory audit
+        run: lhci autorun
+
+      - name: Upload Lighthouse reports as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: lhci-reports
+          if-no-files-found: ignore
+
   deploy:
     name: Deploy to GitHub Pages when public
-    needs: build
+    needs:
+      - build
+      - quality
     if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     environment:

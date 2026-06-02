@@ -1,3 +1,7 @@
+---
+description: "Concise portfolio cut of a fictional NovaDeploy GitOps administration guide for Amazon EKS, Argo CD, ESO, secrets, verification, and rollback workflows."
+---
+
 # NovaDeploy Platform: GitOps Administration Guide - Portfolio Cut
 
 This writing sample is a concise portfolio cut of a fictional GitOps administration guide. It highlights the deployment path, safety controls, verification pattern, and rollback logic without requiring a long runbook read.
