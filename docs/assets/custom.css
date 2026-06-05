@@ -53,7 +53,7 @@
 
 .hero-copy .eyebrow,
 .eyebrow {
-  margin: 0 0 .4rem;
+  margin: 0 0 .5rem;
   color: var(--md-primary-fg-color);
   font-size: .75rem;
   font-weight: 800;
@@ -62,7 +62,7 @@
 }
 
 .hero-copy .hero-title {
-  margin: 0.52rem 0 0;
+  margin: 0.7rem 0 0;
   max-width: 920px;
   font-size: clamp(1.17rem, 2.77vw, 1.72rem);
   line-height: 1.15;
