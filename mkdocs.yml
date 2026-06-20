@@ -1,4 +1,4 @@
-﻿site_name: Jeff Slavin | Lead Technical Writer
+site_name: Jeff Slavin | Lead Technical Writer
 site_description: Documentation portfolio spanning GitOps, DevSecOps, APIs, cloud, edge, and IoT.
 site_author: Jeff Slavin
 site_url: https://jslavin-docs.github.io/
@@ -45,7 +45,11 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
