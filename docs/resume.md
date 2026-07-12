@@ -4,8 +4,10 @@ description: "Resume for Jeff Slavin, a technical writer and documentation lead 
 
 # Jeff Slavin { .resume-page-title }
 
-**Technical Writer & Documentation Lead**  
+**Strategic Technical Writer & Documentation Lead**  
 Miami, FL · [jslavin.docs@gmail.com](mailto:jslavin.docs@gmail.com) · [LinkedIn](https://www.linkedin.com/in/jeff-slavin) · [GitHub](https://github.com/jslavin-docs)
+
+[View resume (PDF)](assets/Jeff-Slavin-Resume.pdf){ .md-button target="_blank" rel="noopener" }
 
 ---
 
@@ -23,7 +25,7 @@ Strategic technical writer and documentation lead with 10+ years of experience d
 Nov 2024 – Present · Remote
 
 - Author design documentation for a secure AWS edge platform (Kubernetes, Argo CD, GitOps), accelerating the rollout of a new architecture that reduces retail client hardware costs by 40%
-- Design architecture diagrams and process flows with solutions architects to standardize GitOps, IAM, secrets management, and zero-trust patterns, cutting architecture review cycles by 25%
+- Design architecture and process flow diagrams with solutions architects to standardize GitOps, IAM, secrets management, and zero-trust patterns, cutting architecture review cycles by 25%
 - Codify a DevSecOps runbook for 50+ Prometheus alerts, standardizing triage, diagnostics, and incident response to reduce MTTR
 - Develop the administrator guide and operational standard for the GitOps-based AWS edge platform, enabling Amazon EKS self-service for application teams
 
@@ -35,7 +37,7 @@ Oct 2022 – Nov 2024 · Remote
 - Defined IoT and edge computing documentation strategy, information architecture, and style guidelines, creating templates that cut review cycles by 40%
 - Implemented a Git-based Docs as Code workflow integrated with CI/CD pipelines, ensuring documentation shipped in sync with product releases
 - Automated SDK generation (Python, Java, Node.js) from OpenAPI 3.0 specifications, cutting partner integration time from weeks to days
-- Authored GCP IoT Core-to-ClearBlade migration guides adopted by 250+ enterprises, reducing migration support tickets by 30%
+- Authored GCP IoT Core-to-ClearBlade enterprise migration guides, cutting support tickets by 30%
 - Transformed Confluence documentation into a self-service portal using Scroll Viewport, increasing search success rates by 60% through a redesigned information architecture and taxonomy
 
 ### ODEM
@@ -86,7 +88,7 @@ Git · GitHub · GitHub Actions · Bitbucket · Jenkins · VS Code · Postman ·
 
 ### Technical Domains
 
-Cloud Computing · Edge Computing · Cybersecurity · IAM · Zero Trust Architecture · Cloud Networking · IoT · SaaS · API Integration · GenAI · Blockchain · Web3
+Cloud Computing · Edge Computing · Cybersecurity · IAM · Zero Trust Architecture · Cloud Networking · IoT · SaaS · API Integration · GenAI
 
 ### Methodologies
 
@@ -94,11 +96,11 @@ GitOps · DevSecOps · SRE · CI/CD · IaC · DevOps · Agile · Scrum · ITIL
 
 ### Languages and Data Formats
 
-Python · Bash · YAML · JSON · HTML · CSS · Markdown
+Python · Bash · YAML · JSON · Markdown
 
 ### Visualization and Design
 
-Mermaid · Figma · Lucidchart · Visio · diagrams.net
+Mermaid · Figma · Lucidchart
 
 ---
 
