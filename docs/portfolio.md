@@ -12,7 +12,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="../writing-samples/novadeploy-gitops-admin-guide-portfolio-cut/">
     <span class="card-tag">Amazon EKS · Argo CD · GitOps · DevSecOps</span>
     <h3>NovaDeploy GitOps Administration Guide - Portfolio Cut</h3>
-    <p>A concise portfolio cut of a fictional EKS and Argo CD operator guide. It demonstrates deployment flow, source-of-truth rules, secret-handling guardrails, verification checks, and rollback decision logic.</p>
+    <p>Designed for a 5–7-minute review, this concise cut preserves the deployment path, source-of-truth rules, secret-handling guardrails, architecture, verification checks, and rollback decisions. Command transcripts and full Terraform detail remain in the extended runbook.</p>
     <span class="card-link">Read sample →</span>
   </a>
 

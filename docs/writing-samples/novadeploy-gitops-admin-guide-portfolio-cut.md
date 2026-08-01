@@ -4,8 +4,6 @@ description: "Concise portfolio cut of a fictional NovaDeploy GitOps administrat
 
 # NovaDeploy Platform: GitOps Administration Guide - Portfolio Cut
 
-This portfolio cut highlights the deployment path, safety controls, verification pattern, and rollback logic without requiring a long runbook read.
-
 *Deploying Services to Amazon EKS with Argo CD*  
 Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 
@@ -14,40 +12,12 @@ Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 !!! note "Portfolio Notice"
     NovaDeploy is a fictional platform created for portfolio purposes. This sample contains no proprietary employer, client, or production information.
 
-!!! info "Positioning"
-    Designed for a 5–7-minute review, this cut preserves the deployment path, core safety controls, architecture, verification pattern, and rollback logic while moving command transcripts and full Terraform detail to the extended runbook.
-
 !!! info "Scope and Audience"
-    **Scope:** Shows a reviewer-oriented deployment path for a fictional production service on Amazon EKS using Argo CD, Terraform-managed IAM/KMS/Secrets Manager metadata, External Secrets Operator, and Reloader. It summarizes guardrails, verification, and rollback logic without full command transcripts or complete Terraform examples.
+    **Scope:** Condensed operator guidance for deploying and refreshing secrets for a fictional production service on Amazon EKS with Argo CD, Terraform, External Secrets Operator, and Reloader.
 
-    **Audience:** Technical writing reviewers, engineering managers, platform engineers, and DevOps/SRE reviewers evaluating GitOps, cloud, Kubernetes, and DevSecOps documentation depth in a short read.
+    **Audience:** Platform engineers, DevOps/SRE practitioners, engineering managers, and technical writing reviewers.
 
-## 1. Case Frame: What This Sample Proves
-
-This portfolio cut is not a full internal runbook. It is a proof-of-judgment sample: how to explain a risky GitOps secret-refresh workflow so reviewers can see the problem, tradeoffs, controls, and recovery logic in 5–7 minutes.
-
-| Case Question | 5-Minute Answer |
-| --- | --- |
-| **Problem** | Secret refresh can appear successful while production risk remains. |
-| **Audience Need** | Show judgment: what to check, when to stop, what evidence is safe, and how rollback is chosen. |
-| **Decision** | Lead with decision points; move transcripts and Terraform detail to the full runbook. |
-| **Impact** | Reviewers can quickly evaluate secret safety, restart control, GitOps auditability, and recovery logic. |
-
-!!! note "Problem Risks Preserved"
-    A safe-looking refresh can still fail if workloads do not restart, verification exposes secret values, or rollback bypasses Git. This cut shows the controls for those risks.
-
-### Judgment Shown in This Cut
-
-| Judgment Area | What the Sample Demonstrates |
-| --- | --- |
-| **Risk reduction** | Blocks plaintext secrets, missing Reloader annotations, unhealthy controllers, and unsafe rollback paths before production. |
-| **Tradeoff management** | Keeps the portfolio version short while preserving the deployment path, safety gates, verification pattern, and rollback logic. |
-| **Operator empathy** | Gives operators concrete pass/fail evidence without asking them to expose secret values or infer rollback strategy under pressure. |
-| **GitOps discipline** | Treats Git revert as the default recovery path and limits Argo CD history rollback to approved SLA emergencies. |
-
----
-
-## 2. At-a-Glance Deployment Path
+## 1. At-a-Glance Deployment Path
 
 !!! success "Happy Path"
     Standard path: validate controllers and local tooling -&gt; update GitOps repo and Terraform-managed IAM/KMS metadata -&gt; open PR -&gt; pass CI and platform review -&gt; merge to protected main -&gt; sync or wait for Argo CD automation -&gt; verify health, secrets, and rollout state -&gt; roll back if needed.
@@ -66,9 +36,9 @@ This portfolio cut is not a full internal runbook. It is a proof-of-judgment sam
 
 ---
 
-## 3. Decision Walkthrough: API Gateway Secret Refresh
+## 2. Decision Walkthrough: API Gateway Secret Refresh
 
-This walkthrough shows the judgment behind one production-style change: prove the refresh is safe without exposing secret values, skipping workload restarts, or breaking GitOps source-of-truth rules.
+Use this walkthrough to verify a production-style secret refresh without exposing secret values, skipping workload restarts, or breaking GitOps source-of-truth rules.
 
 !!! example "PR Evidence Snapshot"
     - `PR #1842` updates chart, production values, and ExternalSecret.
@@ -89,9 +59,9 @@ This walkthrough shows the judgment behind one production-style change: prove th
 
 ---
 
-## 4. Core Guardrails
+## 3. Core Guardrails
 
-These are the controls a reviewer should remember. The full runbook expands them with command transcripts, Terraform snippets, and emergency procedures.
+Apply these controls throughout deployment, verification, and recovery. The full runbook expands them with command transcripts, Terraform snippets, and emergency procedures.
 
 | Control | Rule | Why It Matters |
 | --- | --- | --- |
@@ -105,7 +75,7 @@ These are the controls a reviewer should remember. The full runbook expands them
 
 ---
 
-## 5. Architecture Overview
+## 4. Architecture Overview
 
 The design separates responsibilities: Git declares cluster state, Terraform declares cloud control-plane resources, AWS Secrets Manager stores values, and ESO syncs Kubernetes Secret objects. Reloader detects Secret changes and patches workload Pod template metadata through the EKS API so native workload controllers perform the rolling restart.
 
@@ -167,7 +137,7 @@ flowchart TD
 
 ---
 
-## 6. Repository and Sync Policy
+## 5. Repository and Sync Policy
 
 ```text
 nova-gitops/
@@ -220,7 +190,7 @@ syncPolicy:
 
 ---
 
-## 7. Verification Pattern
+## 6. Verification Pattern
 
 After every sync, validate health, rollout state, ExternalSecret readiness, Kubernetes Secret existence, expected key names, mount success, and Reloader state. Never decode, print, paste, or ticket secret values.
 
@@ -248,9 +218,9 @@ kubectl get secret <service>-app-secrets -n <namespace> \
 
 ---
 
-## 8. Implementation Excerpt: CI Reloader Guardrail
+## 7. Implementation Excerpt: CI Reloader Guardrail
 
-This excerpt is the strongest technical control to preserve: it turns a platform rule into an automated PR failure. The full runbook includes the longer ServiceAccount, SecretStore, IAM, KMS, and rotation examples.
+This CI check turns the Reloader annotation requirement into an automated PR failure. The full runbook includes the longer ServiceAccount, SecretStore, IAM, KMS, and rotation examples.
 
 ```bash
 set -euo pipefail
@@ -294,11 +264,11 @@ if missing:
 PY
 ```
 
-The guardrail is intentionally narrow: it checks rendered Deployments, StatefulSets, and DaemonSets for secret references and fails the build when root workload metadata lacks `reloader.stakater.com/auto: "true"`. That keeps the cut focused on judgment while showing executable depth.
+The guardrail is intentionally narrow: it checks rendered Deployments, StatefulSets, and DaemonSets for secret references and fails the build when root workload metadata lacks `reloader.stakater.com/auto: "true"`. It detects a missing restart control without attempting to validate the full secret lifecycle.
 
 ---
 
-## 9. Rollback Matrix
+## 8. Rollback Matrix
 
 !!! warning "Rollback Principle"
     Git revert is the default because it keeps Git as the source of truth and leaves a clean audit trail. Argo CD history rollback is break-glass only and must be followed by a Git revert within 24 hours.
@@ -311,19 +281,3 @@ The guardrail is intentionally narrow: it checks rendered Deployments, StatefulS
 | GitHub or CI outage blocks revert | Argo CD history rollback | Use the last-good Argo CD revision, document evidence, and complete Git revert when Git/CI returns. |
 | Secret value misconfiguration | Secrets Manager rollback + ESO re-sync | Roll back through the approved secret process. Use Git revert only for SecretStore, ExternalSecret, IAM, KMS, or rotation-config changes. |
 | Cluster unreachable | Infrastructure troubleshooting | Do not use Argo CD. Troubleshoot EKS control plane, networking, IAM, and node health first. |
-
----
-
-## 10. What the Full Runbook Adds
-
-- Full Reloader bash + Python guardrail script with CI/pre-commit placement
-
-- Expanded Terraform examples for workload role, ESO reader role, KMS key policy, and rotation resources
-
-- Detailed cluster health, RBAC, KMS, and rotation-readiness checks
-
-- Approved secret-seeding workflow and non-secret evidence checklist
-
-- Full Argo CD sync-window override and App of Apps emergency rollback sequence
-
-- [Access the full runbook](novadeploy-gitops-admin-guide-full-version.md)
