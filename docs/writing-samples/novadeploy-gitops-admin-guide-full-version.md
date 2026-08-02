@@ -32,7 +32,7 @@ Use this path for standard, non-emergency production deployments. It gives opera
 | 2 | Change declared state | Update Helm values, Argo CD Application resources, ExternalSecret CRs, or Terraform-owned IAM/KMS metadata. | Do not commit or paste plaintext secrets. |
 | 3 | Open PR | Require lint, helm template, kubeconform, secret scan, and Reloader annotation guardrail to pass. | Stop if any workload consumes a Secret without the root Reloader annotation. |
 | 4 | Merge to main | Merge after approval. Argo CD watches main and reconciles the application. | No direct pushes and no direct kubectl edits. |
-| 5 | Sync and verify | Wait for automated sync or run argocd app sync &lt;app-name&gt;; then run health, smoke, and secret-mount checks. | Do not use --force for normal deployment hotfixes. |
+| 5 | Sync and verify | Wait for automated sync or run argocd app sync `<app-name>`; then run health, smoke, and secret-mount checks. | Do not use --force for normal deployment hotfixes. |
 | 6 | Close or recover | Close the ticket only after Synced/Healthy, smoke-test success, and non-secret evidence is recorded. | Use Git revert by default; use Argo CD history only for approved SLA emergencies. |
 
 !!! info "Zero-Trust Definition"
@@ -47,16 +47,16 @@ This section is the single source of truth for production safety rules. Later pr
 | Git is source of truth | main branch protected; all changes through PR; CI passes before merge | Manual cluster drift is rejected or reverted through Argo CD self-heal. |
 | Terraform owns cloud controls | IAM roles, policies, KMS keys, Secrets Manager metadata, rotation config, and Lambda permissions are managed in Terraform | AWS CLI create/update commands are read-only validation only unless approved break-glass work is later imported. |
 | No plaintext secrets | Secret scan, PR review, and no aws_secretsmanager_secret_version for production values | Secret values never enter Git, Terraform state, PR comments, CI logs, chats, or tickets. |
-| IRSA separation | Workload ServiceAccount has non-secret AWS permissions only; dedicated ESO reader ServiceAccount assumes nova-&lt;service&gt;-eso-read | Only ESO reads AWS Secrets Manager for service-scoped paths. |
+| IRSA separation | Workload ServiceAccount has non-secret AWS permissions only; dedicated ESO reader ServiceAccount assumes `nova-<service>-eso-read` | Only ESO reads AWS Secrets Manager for service-scoped paths. |
 | Namespace-scoped SecretStore | ExternalSecret uses secretStoreRef.kind: SecretStore in the workload namespace | Avoid ClusterSecretStore for app secrets unless a platform exception is approved. |
-| Reloader compatibility | Root workload metadata contains reloader.stakater.com/auto: "true"; Argo CD sets RespectIgnoreDifferences=true | Reloader can patch pod templates without Argo CD immediately applying the annotation away. |
+| Reloader compatibility | Root workload metadata contains `reloader.stakater.com/auto: "true"`; the Application defines `ignoreDifferences` for the Reloader annotation and sets `RespectIgnoreDifferences=true`. | Reloader can patch pod templates without Argo CD immediately applying the annotation away. |
 | Rotation gate | var.rotation_enabled remains false until KMS policy, Lambda role, ESO readiness, Reloader RBAC, and mount checks pass | Enable rotation only after every dependency is verified in staging and approved for production. |
 
 ### 2.1 Rotation Readiness Gate
 
 Enable production rotation only after each item passes in staging and the production change is approved.
 
-- Run the cluster health check in Section 3.2.
+- Run the cluster health check in Section 4.2.
 
 - Confirm ESO can reconcile the target ExternalSecret and create/update the Kubernetes Secret.
 
@@ -68,24 +68,85 @@ Enable production rotation only after each item passes in staging and the produc
 
 - Confirm the Argo CD Application ignores Reloader last-reloaded annotations and sets RespectIgnoreDifferences=true.
 
-- Enable var.rotation_enabled only after these checks pass in staging and the production change is approved.
 
-## 3. Prerequisites and Tooling
+
+## 3. Architecture Overview
+
+The design separates responsibilities: Git declares cluster state, Terraform declares cloud control-plane resources, AWS Secrets Manager stores values, and ESO syncs Kubernetes Secret objects. Reloader detects Secret changes and patches workload Pod template metadata through the Kubernetes API server so native workload controllers perform the rolling restart.
+
+```mermaid
+%%{init: {"theme": "base", "flowchart": {"htmlLabels": true, "nodeSpacing": 115, "rankSpacing": 85, "curve": "basis"}, "themeVariables": {"fontFamily": "Roboto, Arial, sans-serif", "fontSize": "16px", "primaryTextColor": "#111827", "secondaryTextColor": "#111827", "tertiaryTextColor": "#111827", "lineColor": "#374151", "edgeLabelBackground": "#ecfdf5"}}}%%
+flowchart TD
+  subgraph gitops["GitOps path"]
+    direction TB
+    pr["Developer PR<br/>opens change"]
+    ci["CI guardrails<br/>block unsafe diff"]
+    main["Protected main<br/>receives merge"]
+    argocd["Argo CD sync<br/>applies desired state"]
+    eks["Amazon EKS<br/>runs target state"]
+    pr --> ci --> main --> argocd --> eks
+  end
+
+  subgraph cloud["Terraform-owned cloud controls"]
+    direction TB
+    tf["Terraform<br/>declares cloud state"]
+    iam["IAM roles<br/>scope access"]
+    kms["KMS policy<br/>controls decrypt"]
+    smMeta["Secrets Manager<br/>metadata and rotation"]
+    sm["AWS secret path<br/>stores values"]
+    tf --> iam --> kms --> smMeta --> sm
+  end
+
+  subgraph runtime["Runtime secret sync and refresh"]
+    direction TB
+    eso["ESO<br/>syncs approved value"]
+    k8sSecret["Kubernetes Secret<br/>object updated"]
+    reloader["Reloader<br/>detects data change"]
+    apiPatch["Kubernetes API server<br/>metadata patch"]
+    rollout["Workload controller<br/>rolls pods safely"]
+    eso --> k8sSecret --> reloader
+    reloader -->|"Patch .spec.template<br/>metadata"| apiPatch
+    apiPatch -->|"Native rolling update"| rollout
+  end
+
+  eks -. "Hosts ESO + Reloader<br/>and workloads inside EKS" .-> eso
+  sm -->|"Scoped read only<br/>dedicated ESO reader<br/>IRSA role<br/>path nova/&lt;service&gt;/*"| eso
+
+  style gitops fill:#eef2ff,stroke:#4338ca,stroke-width:2px,color:#312e81
+  style cloud fill:#fffbeb,stroke:#d97706,stroke-width:2px,color:#78350f
+  style runtime fill:#ecfdf5,stroke:#0d9488,stroke-width:2px,color:#134e4a
+  classDef gitopsNode fill:#f5f7ff,stroke:#4338ca,color:#111827,stroke-width:2px
+  classDef cloudNode fill:#fff7ed,stroke:#b45309,color:#111827,stroke-width:2px
+  classDef runtimeNode fill:#f0fdfa,stroke:#0d9488,color:#111827,stroke-width:2px
+  class pr,ci,main,argocd,eks gitopsNode
+  class tf,iam,kms,smMeta,sm cloudNode
+  class eso,k8sSecret,reloader,apiPatch,rollout runtimeNode
+```
+
+!!! note "Accessible Diagram Summary"
+    The diagram has three sections: GitOps path, Terraform-owned cloud controls, and runtime secret sync and refresh. GitOps moves a reviewed PR through CI, protected main, Argo CD, and Amazon EKS. Terraform declares IAM, KMS, Secrets Manager metadata, rotation config, and the approved AWS secret path.
+
+    Amazon EKS hosts ESO, Reloader, application pods, and other runtime controllers. AWS Secrets Manager is read only by ESO through the dedicated ESO reader IRSA role, scoped to `nova/<service>/*`; application pods do not receive broad Secrets Manager read access.
+
+    ESO syncs the approved value into a Kubernetes Secret. Reloader detects the Secret data change and patches workload Pod template metadata through the Kubernetes API server so the native workload controller performs the rolling restart.
+
+## 4. Prerequisites and Tooling
 
 The platform team pins exact versions in the infrastructure repository. Operators validate compatibility before opening a deployment PR.
 
 | Tool / Resource | Requirement | Purpose |
 | --- | --- | --- |
 | AWS CLI | v2; approved role | EKS auth, read-only validation, and break-glass evidence |
-| Kubectl | Compatible with cluster | Health, rollout, RBAC, and Secret-object checks |
+| kubectl | Compatible with cluster | Health, rollout, RBAC, and Secret-object checks |
 | Helm | 3.x; platform-pinned | Chart rendering during local validation and CI |
 | Argo CD CLI | Compatible with server | Application status, sync, wait, history, rollback |
 | Terraform | Version pinned by infra repo | IAM, KMS, Secrets Manager metadata, rotation config |
 | External Secrets Operator | Platform-pinned; CRDs installed | Syncs AWS Secrets Manager values to Kubernetes Secret objects |
+| ESO controller RBAC | `create` on `serviceaccounts/token` for ServiceAccounts referenced by `auth.jwt.serviceAccountRef` | Allows ESO to request short-lived projected tokens through the Kubernetes TokenRequest API |
 | Reloader | Platform-pinned; reload strategy = annotations | Triggers rolling restarts when watched Secrets/ConfigMaps change |
 | Python + PyYAML | Python 3.x and PyYAML | Fast CI guardrail for rendered workload annotations |
 
-### 3.1 Local Tool Validation
+### 4.1 Local Tool Validation
 
 Run these checks before editing the GitOps repository. If any command fails, fix local access or tooling before opening the PR.
 
@@ -98,60 +159,126 @@ terraform version
 python3 -c "import yaml; print('PyYAML available')"
 ```
 
-### 3.2 Cluster Health Check
+### 4.2 Cluster Health Check
 
 Run this before every release cycle. All controllers must be healthy before sync, rollback, or rotation work proceeds.
 
-```bash
-kubectl get nodes -o wide                         # All nodes Ready
-kubectl get pods -n argocd                       # Argo CD pods Running
-kubectl get pods -n <eso-controller-namespace>   # ESO pods Running
-kubectl get deploy,pods -n <reloader-namespace>  # Reloader Running
+The RBAC checks use `kubectl auth can-i --as` to evaluate the controller ServiceAccounts. The operator or CI identity running this procedure must have permission to impersonate those ServiceAccounts; most production operator roles should not receive broad impersonation rights. If the identity lacks that permission, have the platform-admin or approved CI identity run this block and attach the non-secret results to the deployment ticket.
 
-kubectl get deploy <reloader-deployment-name> -n <reloader-namespace> \
-  -o yaml | grep -Ei "RELOAD_STRATEGY|reloadStrategy|reload-strategy|annotations"
+```bash
+set -euo pipefail
+
+fail() {
+  printf 'ERROR: %s\n' "$1" >&2
+  exit 1
+}
+
+require_can_i_as() {
+  local subject="$1"
+  local message="$2"
+  shift 2
+
+  if ! kubectl auth can-i "$@" --as "${subject}" --quiet; then
+    fail "${message}"
+  fi
+}
+
+kubectl wait --for=condition=Ready node --all --timeout=120s \
+  || fail "One or more cluster nodes are not Ready."
+
+kubectl wait --for=condition=Available deployment --all \
+  -n argocd --timeout=120s \
+  || fail "One or more Argo CD deployments are unavailable."
+
+kubectl rollout status statefulset/argocd-application-controller \
+  -n argocd --timeout=120s \
+  || fail "Argo CD application controller is not ready."
+
+kubectl wait --for=condition=Available deployment --all \
+  -n <eso-controller-namespace> --timeout=120s \
+  || fail "One or more ESO deployments are unavailable."
+
+kubectl wait --for=condition=Available deployment --all \
+  -n <reloader-namespace> --timeout=120s \
+  || fail "Reloader is unavailable."
+
+RELOADER_STRATEGY=$(kubectl get deploy <reloader-deployment-name> \
+  -n <reloader-namespace> \
+  -o jsonpath='{.spec.template.spec.containers[*].args}{" "}{.spec.template.spec.containers[*].env[?(@.name=="RELOAD_STRATEGY")].value}' \
+  | tr '",[]' '    ')
+
+printf '%s\n' "${RELOADER_STRATEGY}" \
+  | grep -Eqi '(^|[[:space:]])(--)?reload-strategy[=[:space:]]+annotations([[:space:]]|$)|(^|[[:space:]])annotations([[:space:]]|$)' \
+  || fail "Reloader is not configured with the required annotations reload strategy."
+
+ESO_SA=$(kubectl get deploy <eso-controller-deployment-name> \
+  -n <eso-controller-namespace> \
+  -o jsonpath='{.spec.template.spec.serviceAccountName}')
 
 RELOADER_SA=$(kubectl get deploy <reloader-deployment-name> \
   -n <reloader-namespace> \
   -o jsonpath='{.spec.template.spec.serviceAccountName}')
-test "${RELOADER_SA}" = "<reloader-sa-name>"
+
+test -n "${ESO_SA}" \
+  || fail "Could not resolve the ESO controller ServiceAccount."
+
+test "${RELOADER_SA}" = "<reloader-sa-name>" \
+  || fail "Reloader is using '${RELOADER_SA}', not the expected '<reloader-sa-name>'."
+
+ESO_SUBJECT="system:serviceaccount:<eso-controller-namespace>:${ESO_SA}"
+RELOADER_SUBJECT="system:serviceaccount:<reloader-namespace>:${RELOADER_SA}"
+
+require_can_i_as \
+  "${ESO_SUBJECT}" \
+  "ESO cannot create TokenRequest objects for the referenced ServiceAccount in <namespace>." \
+  create serviceaccounts/token -n <namespace>
 
 for verb in get list watch; do
-  kubectl auth can-i "${verb}" secrets \
-    --as system:serviceaccount:<reloader-namespace>:${RELOADER_SA} \
-    -n <namespace>
-  kubectl auth can-i "${verb}" configmaps \
-    --as system:serviceaccount:<reloader-namespace>:${RELOADER_SA} \
-    -n <namespace>
+  require_can_i_as \
+    "${RELOADER_SUBJECT}" \
+    "Reloader cannot ${verb} Secrets in <namespace>." \
+    "${verb}" secrets -n <namespace>
+
+  require_can_i_as \
+    "${RELOADER_SUBJECT}" \
+    "Reloader cannot ${verb} ConfigMaps in <namespace>." \
+    "${verb}" configmaps -n <namespace>
 done
 
-kubectl auth can-i patch deployments.apps \
-  --as system:serviceaccount:<reloader-namespace>:${RELOADER_SA} \
-  -n <namespace>
+for workload in deployments.apps statefulsets.apps daemonsets.apps; do
+  for verb in get list update patch; do
+    require_can_i_as \
+      "${RELOADER_SUBJECT}" \
+      "Reloader cannot ${verb} ${workload} in <namespace>." \
+      "${verb}" "${workload}" -n <namespace>
+  done
+done
 ```
+
+The strategy check normalizes the JSON array that `jsonpath` returns for `args`, so it matches both the combined `--reload-strategy=annotations` form and the split `--reload-strategy annotations` form. Confirm the flag and environment-variable names against the Reloader chart version the platform pins before treating this check as authoritative.
 
 | Component | Pass Criteria |
 | --- | --- |
 | Nodes | All schedulable nodes report Ready and no unexpected NoSchedule taints. |
 | Argo CD | server, repo-server, application-controller, and dex are Running. |
-| ESO | controller and webhook are Running, and ExternalSecret status becomes Ready after apply. |
-| Reloader | live deployment uses the annotations reload strategy and has RBAC to patch workloads. |
-| EKS Secrets encryption | Clusters earlier than 1.28 show explicit Kubernetes Secrets encryption before zero-trust checklist passes. |
+| ESO | Controller and webhook are Running; the controller can `create` `serviceaccounts/token` for the namespace that contains the referenced ServiceAccount; ExternalSecret status becomes Ready after apply. |
+| Reloader | Live deployment uses the annotations reload strategy and can read watched Secrets/ConfigMaps and update each supported workload type. |
+| EKS API-data encryption | Clusters below Kubernetes 1.28 must have explicit Secrets envelope encryption configured; EKS clusters running 1.28 or later receive default envelope encryption for all Kubernetes API data. See the [AWS default envelope encryption documentation](https://docs.aws.amazon.com/eks/latest/userguide/envelope-encryption.html). |
 
-## 4. IAM, KMS, SecretStore, and ESO Setup
+## 5. IAM, KMS, SecretStore, and ESO Setup
 
 !!! info "Section Summary"
     Create two tightly scoped IRSA roles per service. The workload role receives only non-secret AWS access. The ESO reader role receives service-scoped Secrets Manager read access plus KMS decrypt through Secrets Manager. Terraform owns the cloud resources; Kubernetes manifests only bind the matching ServiceAccounts.
 
-### 4.1 Role Model
+### 5.1 Role Model
 
 | Role / Account | Used By | Allowed Access | Explicitly Not Allowed |
 | --- | --- | --- | --- |
-| nova-&lt;service&gt;-prod | Workload ServiceAccount &lt;workload-sa-name&gt; | Only the non-secret AWS APIs the application needs, such as S3 or DynamoDB | No Secrets Manager read permissions |
-| nova-&lt;service&gt;-eso-read | ServiceAccount &lt;service&gt;-eso-secret-reader | secretsmanager:GetSecretValue and DescribeSecret for nova/&lt;service&gt;/* plus KMS decrypt through Secrets Manager | No wildcard paths; no trust for other service accounts |
+| `nova-<service>-prod` | Workload ServiceAccount `<workload-sa-name>` | Only the non-secret AWS APIs the application needs, such as S3 or DynamoDB | No Secrets Manager read permissions |
+| `nova-<service>-eso-read` | ServiceAccount `<service>-eso-secret-reader` | `secretsmanager:GetSecretValue`, `DescribeSecret`, and `ListSecretVersionIds` for `nova/<service>/*`, plus KMS decrypt through Secrets Manager | No wildcard paths; no trust for other service accounts |
 | rotation Lambda role | Approved Secrets Manager rotation Lambda | Rotation-only actions and KMS use through Secrets Manager when rotation is enabled | Not present in KMS policy while var.rotation_enabled=false |
 
-### 4.2 Terraform Pattern
+### 5.2 Terraform Pattern
 
 Confirm the EKS OIDC issuer before provisioning IRSA. This is read-only validation, not an instruction to create IAM resources with ad hoc CLI commands.
 
@@ -163,7 +290,7 @@ aws eks describe-cluster \
   --output text
 ```
 
-Create or update service IAM resources through infra/iam/&lt;service&gt;.tf. The excerpt below shows the trust boundary that matters most: only the dedicated ESO secret-reader ServiceAccount can assume the ESO reader role.
+Create or update service IAM resources through `infra/iam/<service>.tf`. The excerpt below shows the trust boundary that matters most: only the dedicated ESO secret-reader ServiceAccount can assume the ESO reader role.
 
 ```hcl
 locals {
@@ -197,9 +324,14 @@ resource "aws_iam_role" "eso_read" {
 }
 ```
 
-Attach the secret-read policy only to nova-&lt;service&gt;-eso-read, never to the workload role.
+Attach the secret-read policy only to `nova-<service>-eso-read`, never to the workload role. Pass the ARN of the KMS key that encrypts the service secret through the typed `secrets_kms_key_arn` input.
 
 ```hcl
+variable "secrets_kms_key_arn" {
+  description = "ARN of the KMS key that encrypts this service's Secrets Manager secrets"
+  type        = string
+}
+
 data "aws_iam_policy_document" "eso_read" {
   statement {
     actions = [
@@ -208,13 +340,13 @@ data "aws_iam_policy_document" "eso_read" {
       "secretsmanager:ListSecretVersionIds"
     ]
     resources = [
-      "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:nova/${local.service}/*"
+      "arn:aws:secretsmanager:${var.region}:${var.account_id}:secret:nova/${var.service}/*"
     ]
   }
 
   statement {
     actions   = ["kms:Decrypt"]
-    resources = [local.secrets_kms_key_arn]
+    resources = [var.secrets_kms_key_arn]
     condition {
       test     = "StringEquals"
       variable = "kms:ViaService"
@@ -222,12 +354,18 @@ data "aws_iam_policy_document" "eso_read" {
     }
   }
 }
+
+resource "aws_iam_role_policy" "eso_read" {
+  name   = "nova-${var.service}-eso-read"
+  role   = aws_iam_role.eso_read.id
+  policy = data.aws_iam_policy_document.eso_read.json
+}
 ```
 
 !!! info "KMS Source of Truth"
-    The same KMS key ARN must be used by the Secrets Manager secret, the nova-&lt;service&gt;-eso-read IAM policy, the KMS key policy, and the rotation Lambda role policy. If the platform uses a shared externally managed key, verify the key policy before merge.
+    The same KMS key ARN must be used by the Secrets Manager secret, the `nova-<service>-eso-read` IAM policy, the KMS key policy, and the rotation Lambda role policy. If the platform uses a shared externally managed key, verify the key policy before merge.
 
-### 4.3 ServiceAccount and SecretStore Manifests
+### 5.3 ServiceAccount and SecretStore Manifests
 
 Prefer declarative ServiceAccount manifests in charts/ so IAM bindings stay version-controlled. The workload ServiceAccount and the ESO reader ServiceAccount are intentionally separate.
 
@@ -279,9 +417,9 @@ spec:
         property: password
 ```
 
-remoteRef.key must match the Terraform-managed Secrets Manager name pattern: nova/&lt;service&gt;/&lt;secret_name&gt;. Do not use kubectl, Git, or Terraform to set production secret values.
+remoteRef.key must match the Terraform-managed Secrets Manager name pattern: `nova/<service>/<secret_name>`. Do not use kubectl, Git, or Terraform to set production secret values.
 
-### 4.4 Approved Secret-Seeding Workflow
+### 5.4 Approved Secret-Seeding Workflow
 
 1. A platform administrator retrieves the initial value from the approved password manager or PAM workflow.
 
@@ -300,20 +438,20 @@ remoteRef.key must match the Terraform-managed Secrets Manager name pattern: nov
 ```bash
 aws secretsmanager put-secret-value \
   --secret-id nova/<service>/<secret_name> \
-  --secret-string file:///<secure-temp-path>/<service>-secret.json
+  --secret-string file://<secure-temp-path>/<service>-secret.json
 
 aws secretsmanager describe-secret \
   --secret-id nova/<service>/<secret_name> \
   --query "{Name:Name,VersionIdsToStages:VersionIdsToStages,KmsKeyId:KmsKeyId}"
 ```
 
-## 5. GitOps Repository Layout
+## 6. GitOps Repository Layout
 
 NovaDeploy uses one control-plane GitOps repository as the source of truth for cluster state. Application source code lives in separate repositories; GitOps contains manifests, Helm overrides, ExternalSecret resources, cluster baselines, and infrastructure modules.
 
 ```text
 nova-gitops/
-  apps/                         # Argo CD Application manifests
+  apps/                          # Argo CD Application manifests
   clusters/production/           # AppProject, root app, namespaces, policy baseline
   charts/<service>/              # Service Helm chart
   envs/production/values/        # Production value overrides
@@ -325,15 +463,23 @@ nova-gitops/
 
 | Path | Owner | Review Focus |
 | --- | --- | --- |
-| apps/ | Platform engineering | Application project, destination, sync policy, ignoreDifferences |
-| charts/&lt;service&gt;/ | Service team + platform reviewer | Workload metadata annotations, probes, resources, service accounts |
-| envs/production/values/ | Service team | Image tag, config values, environment-specific overrides |
-| secrets/external/ | Platform engineering | ExternalSecret references only; no secret values |
-| infra/iam/&lt;service&gt;.tf | Platform engineering | IAM trust boundaries, KMS policy, Secrets Manager metadata, rotation gates |
+| `apps/` | Platform engineering | Application project, destination, sync policy, `ignoreDifferences` |
+| `clusters/production/` | Platform engineering | AppProject, sync windows, namespace baseline |
+| `charts/<service>/` | Service team + platform reviewer | Workload metadata annotations, probes, resources, service accounts |
+| `envs/production/values/` | Service team | Image tag, config values, environment-specific overrides |
+| `secrets/external/` | Platform engineering | ExternalSecret references only; no secret values |
+| `infra/iam/<service>.tf` | Platform engineering | IAM trust boundaries, KMS policy, Secrets Manager metadata, rotation gates |
+| `scripts/` | Platform engineering | Guardrail correctness, fail-closed behavior, and portability |
+| `.github/workflows/` | Platform engineering | Required checks, pinned actions, and least-privilege workflow permissions |
 
-## 6. Argo CD Application and Sync Policy
+## 7. Argo CD Application and Sync Policy
 
 The Application manifest below combines automated sync, server-side apply, and Reloader compatibility. Production namespaces are pre-created through clusters/production/ so NetworkPolicy, ResourceQuota, LimitRange, labels, and admission policies exist before workload sync.
+
+!!! warning "Auto-Prune Boundary"
+    Do not copy `prune: true` into a production Application unless the Application is constrained by the production AppProject and sync windows. Without those controls, auto-prune can turn a bad merge, path mistake, or unauthorized destination into automated deletion.
+
+Configure both `ignoreDifferences` and `RespectIgnoreDifferences=true`: the `ignoreDifferences` rules identify the Reloader-managed annotation that Argo CD should exclude from drift comparison, while `RespectIgnoreDifferences=true` makes those exclusions apply during sync rather than only during diff.
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -383,29 +529,29 @@ spec:
 | RespectIgnoreDifferences=true | Argo CD respects ignoreDifferences during sync. | Prevents Reloader last-reloaded annotations from being applied away during sync. |
 | No CreateNamespace=true | Production namespaces are not created ad hoc by service apps. | Cluster baseline creates namespaces with required policy first. |
 
-### 6.1 Sync Windows
+### 7.1 Sync Windows
 
-Sync windows live in the AppProject. Routine production syncs are allowed only in approved windows; denied windows block new syncs unless an approved manual-sync override is enabled.
+Sync windows live in the AppProject. Because this project defines a matching `allow` window, that allow schedule is exhaustive: both automated and manual syncs are blocked whenever no matching allow window is active. A separate `deny` window is optional and is useful only for narrower blackout periods inside an otherwise allowed schedule; it is not required to cover nights or weekends.
 
-| Window | Policy | Operator Action |
+| Window / State | Effect | Operator Action |
 | --- | --- | --- |
-| Monday-Friday 09:00-17:00 UTC | Allowed | Normal automated or manual sync permitted after PR approval. |
-| Friday 17:00-Monday 09:00 UTC | Denied | Use the emergency manual-sync path only for approved incidents. |
-| Emergency override | Manual sync enabled per window ID | Enable, sync, wait, verify, and disable in one procedure; do not leave the override open. |
+| Monday-Friday 09:00-17:00 UTC; matching allow window active | Routine automated or manual sync is permitted after PR approval. | Sync normally, then complete Section 8 verification. |
+| All other times; no matching allow window active | Routine sync is blocked by default, including Monday-Thursday overnight. | Wait for the next allow window unless an approved incident requires a manual override. |
+| Approved emergency manual override | `manualSync` is temporarily enabled on the matching allow window. | Enable the override by window ID, perform one manual sync, verify, and disable the override immediately. |
 
-## 7. Deployment Verification
+## 8. Deployment Verification
 
 Close the deployment ticket only after all checks pass and the evidence contains no secret values. Validate object state, expected key names, mount success, rollout state, and recent pod creation time only.
 
-### 7.1 Health and Secret Checks
+### 8.1 Health and Secret Checks
 
 ```bash
 argocd app get <app-name> --refresh
 argocd app wait <app-name> --health
-kubectl rollout status deployment/<name> -n <namespace>
+kubectl rollout status deployment/<service> -n <namespace>
 
-kubectl get externalsecret <name> -n <namespace>
-kubectl describe externalsecret <name> -n <namespace>
+kubectl get externalsecret <service>-app-secrets -n <namespace>
+kubectl describe externalsecret <service>-app-secrets -n <namespace>
 kubectl get secret <service>-app-secrets -n <namespace>
 kubectl get secret <service>-app-secrets -n <namespace> \
   -o go-template='{{range $k, $_ := .data}}{{printf "%s\n" $k}}{{end}}'
@@ -413,11 +559,11 @@ kubectl get secret <service>-app-secrets -n <namespace> \
 # Never print or decode values.
 ```
 
-### 7.2 Secret Mount Check
+### 8.2 Secret Mount Check
 
 The disposable pod confirms the Secret can be mounted without exposing values. The command prints only the non-secret success string secret-mounted.
 
-```yaml
+```bash
 cat <<'EOF' | kubectl apply -n <namespace> -f -
 apiVersion: v1
 kind: Pod
@@ -444,11 +590,11 @@ kubectl logs secret-mount-check -n <namespace>
 kubectl delete pod secret-mount-check -n <namespace>
 ```
 
-### 7.3 Reloader Confirmation
+### 8.3 Reloader Confirmation
 
 ```bash
-kubectl rollout status deployment/<name> -n <namespace>
-kubectl get deploy <name> -n <namespace> \
+kubectl rollout status deployment/<service> -n <namespace>
+kubectl get deploy <service> -n <namespace> \
   -o go-template='{{ index .spec.template.metadata.annotations "reloader.stakater.com/last-reloaded-from" }}{{ "\n" }}'
 kubectl get pods -n <namespace> -l app=<service> \
   --sort-by=.metadata.creationTimestamp
@@ -456,7 +602,7 @@ argocd app get <app-name> --refresh
 # Expected: pods were recreated after the Secret refresh; app remains Synced / Healthy.
 ```
 
-## 8. Rollback and Recovery
+## 9. Rollback and Recovery
 
 !!! warning "Rollback Principle"
     Git revert is the default because it preserves Git as the source of truth and keeps the audit trail clean. Argo CD history rollback is break-glass only and creates mandatory GitOps debt until the matching Git revert merges.
@@ -465,12 +611,12 @@ argocd app get <app-name> --refresh
 | --- | --- | --- |
 | Bad image tag promoted | Git revert | Revert the image-bump commit, pass CI, merge, then sync or wait for automation. |
 | Wrong Helm values or Application manifest | Git revert | Revert the Git-tracked change so Git remains the canonical desired state. |
-| Application unreachable and SLA at risk | Argo CD history rollback | Use only if Argo CD and the Kubernetes API are reachable and Git revert cannot meet the SLA. Follow with Git revert within 24 hours. |
-| GitHub or CI outage blocks revert | Argo CD history rollback | Use the last-good Argo CD revision, document evidence, and complete Git revert when Git/CI returns. |
+| Application unreachable and SLA at risk | Argo CD history rollback | Use only if Argo CD and the Kubernetes API are reachable and Git revert cannot meet the SLA. Follow Section 9.2. |
+| GitHub or CI outage blocks revert | Argo CD history rollback | Roll back to the last-good revision while Git or CI is unavailable, and record non-secret evidence. Follow Section 9.2. |
 | Secret value misconfiguration | Secrets Manager rollback + ESO re-sync | Roll back through the approved secret process. Use Git revert only for SecretStore, ExternalSecret, IAM, KMS, or rotation-config changes. |
 | Cluster unreachable | Infrastructure troubleshooting | Do not use Argo CD. Troubleshoot EKS control plane, networking, IAM, and node health first. |
 
-### 8.1 Strategy 1: Git Revert
+### 9.1 Git Revert
 
 1. Identify the bad commit SHA and the last-good commit in nova-gitops.
 
@@ -480,7 +626,7 @@ argocd app get <app-name> --refresh
 
 4. Open a PR, require emergency approval, merge, then sync or wait for automation.
 
-5. Run the full Section 7 verification path before closing the incident.
+5. Run the full Section 8 verification path before closing the incident.
 
 ```bash
 git checkout main && git pull
@@ -495,22 +641,35 @@ git revert -m 1 <bad-sha> --no-edit
 git push origin revert/<bad-sha>
 ```
 
-If the change freeze blocks sync, use the canonical emergency manual-sync path below. The override grants permission for the manual sync only; it does not broadly re-enable automated sync during the denied window.
+If the exhaustive allow schedule blocks an approved emergency sync, use the canonical manual-sync override below. The override permits the manual operation without opening automated sync outside the allow window.
 
 ```bash
 argocd proj windows list <project>
-argocd proj windows enable-manual-sync <project> <window-id>
+argocd proj windows enable-manual-sync <project> <allow-window-id>
 argocd app sync <app-name>
 argocd app wait <app-name> --health
-argocd proj windows disable-manual-sync <project> <window-id>
+argocd proj windows disable-manual-sync <project> <allow-window-id>
 ```
 
-### 8.2 Strategy 2: Argo CD History Rollback
+### 9.2 Argo CD History Rollback
 
-Use only when a Git revert cannot meet the SLA window. Confirm Argo CD and the Kubernetes API are reachable first. If the App of Apps root app manages child Application CRs, suspend the root app during the approved incident window or it may re-enable the child app and re-sync the broken commit.
+Use only when a Git revert cannot meet the SLA window. If the App-of-Apps root app manages child Application CRs, suspend the root app during the approved incident window or it may re-enable the child app and re-sync the broken commit.
+
+Run the break-glass sequence in this order:
+
+1. Confirm Argo CD and the Kubernetes API are reachable.
+
+2. Record the root and target Applications' current sync-policy settings in the incident ticket. Do not export and later re-apply the full live Application object: that output includes server-managed fields and may also bypass the Git-managed definition.
+
+3. Suspend the App-of-Apps root app, then disable auto-sync on the target Application.
+
+4. Roll back the target Application to the last-good revision and wait for health.
+
+5. Keep both suspended until the matching Git revert merges.
 
 ```bash
-argocd app get <root-app-name> -o yaml > root-app-sync-policy.before.yaml
+argocd app get <root-app-name> --refresh
+argocd app get <app-name> --refresh
 argocd app list --selector app.kubernetes.io/part-of=<root-app-name>
 argocd app set <root-app-name> --sync-policy none
 argocd app set <app-name> --sync-policy none
@@ -520,65 +679,108 @@ argocd app wait <app-name> --health
 # Leave target auto-sync disabled until the mandatory Git revert merges.
 ```
 
+Close the GitOps debt after the incident:
+
 1. Open a Jira ticket tagged [gitops-debt].
 
 2. Complete the matching Git revert within 24 hours.
 
-3. After the revert PR merges, re-enable target app auto-sync and restore the captured root app manifest.
+3. After the revert PR merges, restore the target and root Applications with `argocd app set` using their exact pre-incident, Git-declared policies.
 
-4. Refresh the root app and confirm it returns to its pre-incident sync policy.
+4. Refresh both Applications and confirm they return to their pre-incident sync policies and the reverted Git revision.
+
+The example below assumes both Applications normally use automated sync, prune, and self-heal. Remove any flag that was not enabled in the Git-managed definition.
 
 ```bash
-argocd app set <app-name> --sync-policy automated --auto-prune --self-heal
-kubectl apply -n argocd -f root-app-sync-policy.before.yaml
+argocd app set <app-name> \
+  --sync-policy automated \
+  --auto-prune \
+  --self-heal
+
+argocd app set <root-app-name> \
+  --sync-policy automated \
+  --auto-prune \
+  --self-heal
+
+argocd app get <app-name> --refresh
 argocd app get <root-app-name> --refresh
 ```
 
-## 9. Appendices
+## 10. Appendices
 
-### 9.1 CI Reloader Annotation Guardrail
+### 10.1 CI Reloader Annotation Guardrail
 
-This guardrail checks rendered workloads individually, so one correctly annotated Deployment cannot mask another secret-consuming workload that lacks the root annotation.
+This guardrail checks rendered workloads individually, so one correctly annotated Deployment cannot mask another secret-consuming workload that lacks the root annotation. The positional Helm release name mirrors `Application.metadata.name`, and `--namespace` mirrors `Application.spec.destination.namespace`. If the Application sets `source.helm.releaseName`, use that override instead.
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-python3 - <(helm template charts/<service> -f envs/production/values/<service>.yaml) <<'PY'
-import sys, yaml
+rendered="$(mktemp)"
+trap 'rm -f "$rendered"' EXIT
+
+release_name="<app-name>"          # Application.metadata.name
+target_namespace="<namespace>"     # Application.spec.destination.namespace
+
+helm template "${release_name}" charts/<service> \
+  --namespace "${target_namespace}" \
+  -f envs/production/values/<service>.yaml \
+  > "$rendered"
+
+python3 - "$rendered" <<'PY'
+import sys
+import yaml
 
 WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet"}
 SECRET_KEYS = {"secretKeyRef", "secretRef", "secretName"}
-missing = []
 
-def uses_secret(x):
-    if isinstance(x, dict):
-        return bool(SECRET_KEYS & x.keys()) or any(uses_secret(v) for v in x.values())
-    if isinstance(x, list):
-        return any(uses_secret(v) for v in x)
+
+def uses_secret(node):
+    if isinstance(node, dict):
+        return bool(SECRET_KEYS & node.keys()) or any(
+            uses_secret(value) for value in node.values()
+        )
+    if isinstance(node, list):
+        return any(uses_secret(value) for value in node)
     return False
 
-for obj in yaml.safe_load_all(open(sys.argv[1], encoding="utf-8")):
-    if not isinstance(obj, dict) or obj.get("kind") not in WORKLOADS:
-        continue
 
-    meta = obj.get("metadata") or {}
-    pod = obj.get("spec", {}).get("template", {}).get("spec", {})
-    annotations = meta.get("annotations") or {}
+missing = []
 
-    if uses_secret(pod) and annotations.get("reloader.stakater.com/auto") != "true":
-        missing.append(f'{obj["kind"]}/{meta.get("name", "<unknown>")}')
+with open(sys.argv[1], encoding="utf-8") as rendered:
+    for obj in yaml.safe_load_all(rendered):
+        if not isinstance(obj, dict) or obj.get("kind") not in WORKLOADS:
+            continue
+
+        meta = obj.get("metadata") or {}
+        pod = obj.get("spec", {}).get("template", {}).get("spec", {})
+        annotations = meta.get("annotations") or {}
+
+        if (
+            uses_secret(pod)
+            and annotations.get("reloader.stakater.com/auto") != "true"
+        ):
+            missing.append(
+                f'{obj["kind"]}/{meta.get("name", "<unknown>")}'
+            )
 
 if missing:
-    print('ERROR: secret-consuming workloads missing reloader.stakater.com/auto="true":', file=sys.stderr)
-    print("\n".join(f"  - {x}" for x in missing), file=sys.stderr)
+    print(
+        'ERROR: secret-consuming workloads missing '
+        'reloader.stakater.com/auto="true":',
+        file=sys.stderr,
+    )
+    print(
+        "\n".join(f"  - {item}" for item in missing),
+        file=sys.stderr,
+    )
     sys.exit(1)
 PY
 ```
 
-The script intentionally checks Deployment, StatefulSet, and DaemonSet pod specs. Ingress tls.secretName values do not create false positives. Use kubeconform and admission policy for broader structural enforcement beyond this fast PR check.
+The temporary file makes the Helm render fail closed under `set -euo pipefail`; a failed `helm template` stops the job before Python runs. The script intentionally checks Deployment, StatefulSet, and DaemonSet pod specs. Ingress `tls.secretName` values do not create false positives. Use kubeconform and admission policy for broader structural enforcement beyond this fast PR check.
 
-### 9.2 Evidence Checklist
+### 10.2 Evidence Checklist
 
 | Evidence Item | Acceptable Example | Forbidden Evidence |
 | --- | --- | --- |
@@ -589,15 +791,26 @@ The script intentionally checks Deployment, StatefulSet, and DaemonSet pod specs
 | Reloader rollout | Rollout status and pod creation times after Secret refresh | Secret payload |
 | Rollback | Revert PR link, approval, commit SHA, app health after sync | Manual kubectl patch not represented in Git |
 
-### 9.3 Placeholder Conventions
+### 10.3 Common Placeholders
 
 | Placeholder | Meaning | Example |
 | --- | --- | --- |
-| &lt;ACCOUNT_ID&gt; | AWS account ID | 123456789012 |
-| &lt;region&gt; | AWS region for EKS, Secrets Manager, and KMS | us-east-1 |
-| &lt;namespace&gt; | Kubernetes namespace for the workload | api-gateway |
-| &lt;service&gt; | NovaDeploy service name | api-gateway |
-| &lt;cluster-name&gt; | EKS cluster name | nova-prod |
-| &lt;workload-sa-name&gt; | Workload Kubernetes ServiceAccount | api-gateway-sa |
-| &lt;eso-controller-namespace&gt; | Namespace where ESO controller runs | external-secrets |
-| &lt;reloader-namespace&gt; | Namespace where Reloader runs | reloader |
+| `<ACCOUNT_ID>` | AWS account ID | `123456789012` |
+| `<region>` | AWS region for EKS, Secrets Manager, and KMS | `us-east-1` |
+| `<namespace>` | Kubernetes namespace for the workload | `api-gateway` |
+| `<service>` | NovaDeploy service name | `api-gateway` |
+| `<cluster-name>` | EKS cluster name | `nova-prod` |
+| `<app-name>` | Argo CD Application name | `api-gateway` |
+| `<project>` | Argo CD AppProject name | `novadeploy-production` |
+| `<bad-sha>` | Git commit SHA being reverted | `9f28b6c` |
+| `<revision-number>` | Argo CD history revision number | `42` |
+| `<root-app-name>` | App-of-Apps root Application name | `novadeploy-production-root` |
+| `<secret_name>` | Service-scoped Secrets Manager secret suffix | `db` |
+| `<secure-temp-path>` | Encrypted local directory used for temporary secret input | `/home/operator/secure-tmp` |
+| `<allow-window-id>` | Argo CD sync-window ID | `7` |
+| `<workload-sa-name>` | Workload Kubernetes ServiceAccount | `api-gateway-sa` |
+| `<eso-controller-namespace>` | Namespace where ESO runs | `external-secrets` |
+| `<eso-controller-deployment-name>` | ESO controller Deployment name | `external-secrets` |
+| `<reloader-namespace>` | Namespace where Reloader runs | `reloader` |
+| `<reloader-deployment-name>` | Reloader Deployment name | `reloader` |
+| `<reloader-sa-name>` | Expected Reloader ServiceAccount name | `reloader` |
