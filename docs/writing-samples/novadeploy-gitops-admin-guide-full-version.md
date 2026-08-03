@@ -29,7 +29,7 @@ Use this path for standard, non-emergency production deployments. It gives opera
 | Step | Action | What to Do | Stop Condition |
 | --- | --- | --- | --- |
 | 1 | Validate readiness | Run controller health checks, local tool checks, and the guardrail table before editing the deployment PR. | Stop if Argo CD, ESO, or Reloader is unhealthy. |
-| 2 | Change declared state | Update Helm values, Argo CD Application resources, ExternalSecret CRs, or Terraform-owned IAM/KMS metadata. | Do not commit or paste plaintext secrets. |
+| 2 | Change declared state | Update Helm values, Argo CD Application resources, ExternalSecret CRs, or Terraform-owned IAM/KMS metadata. | Do not commit, paste, or type plaintext secrets, in Git, in a PR, or in a shell. |
 | 3 | Open PR | Require lint, helm template, kubeconform, secret scan, and Reloader annotation guardrail to pass. | Stop if any workload consumes a Secret without the root Reloader annotation. |
 | 4 | Merge to main | Merge after approval. Argo CD watches main and reconciles the application. | No direct pushes and no direct kubectl edits. |
 | 5 | Sync and verify | Wait for automated sync or run argocd app sync `<app-name>`; then run health, smoke, and secret-mount checks. | Do not use --force for normal deployment hotfixes. |
@@ -145,6 +145,8 @@ The platform team pins exact versions in the infrastructure repository. Operator
 | ESO controller RBAC | `create` on `serviceaccounts/token` for ServiceAccounts referenced by `auth.jwt.serviceAccountRef` | Allows ESO to request short-lived projected tokens through the Kubernetes TokenRequest API |
 | Reloader | Platform-pinned; reload strategy = annotations | Triggers rolling restarts when watched Secrets/ConfigMaps change |
 | Python + PyYAML | Python 3.x and PyYAML | Fast CI guardrail for rendered workload annotations |
+| jq | 1.6 or later | Safe JSON construction during approved secret seeding |
+| Approved password manager or PAM CLI | Platform-approved client, authenticated with MFA | Supplies the initial secret value to the seeding workflow without exposing it to a shell |
 
 ### 4.1 Local Tool Validation
 
@@ -157,6 +159,7 @@ helm version --short
 argocd version --client
 terraform version
 python3 -c "import yaml; print('PyYAML available')"
+jq --version
 ```
 
 ### 4.2 Cluster Health Check
@@ -421,29 +424,79 @@ remoteRef.key must match the Terraform-managed Secrets Manager name pattern: `no
 
 ### 5.4 Approved Secret-Seeding Workflow
 
+Seeding is the only sanctioned human write path to a production secret value. Terraform owns Secrets Manager metadata, KMS policy, and rotation config, but Section 2 bars `aws_secretsmanager_secret_version` for production values. The first AWSCURRENT version is therefore seeded once, by an approved administrator, through the procedure below.
+
+!!! warning "Where seeding is allowed to happen"
+    If your organization forbids handling production secret material on workstations, do not use the workstation path. Seed through the PAM session broker, an approved bastion or jump host, or a CI job that assumes the seeding role through OIDC and reads the value from the approved secret broker. The commands are identical in every case; only the host and the assumed identity change. Record which path was used in the deployment ticket.
+
 1. A platform administrator retrieves the initial value from the approved password manager or PAM workflow.
 
-2. The administrator opens a private workstation session with MFA, shell history disabled, and no terminal recording.
+2. The administrator opens a private session with MFA. **The secret value is never typed, pasted, echoed, or interpolated into a shell.** It moves from the password manager to the input stream and from the input stream to AWS, and appears nowhere else.
 
-3. A temporary JSON input file is created only on encrypted local storage with 0600 permissions.
+    !!! danger "Do not disable session controls"
+        Do not disable shell history or terminal recording. PAM session capture is a required control, and step 7 depends on the same audit trail. The forms below keep the value out of `argv` and out of history by construction, so suppressing the audit record buys nothing and defeats a control the rest of this section relies on.
 
-4. The first AWSCURRENT version is seeded with aws secretsmanager put-secret-value and a file reference.
+3. The administrator supplies the value using one of the two approved forms. Both read directly from the password-manager CLI, so the value never appears in a shell prompt, in `argv`, or in history.
 
-5. Verification uses describe-secret only; get-secret-value is not used during deployment verification.
+    **Form A, no file on disk (preferred).** Process substitution hands the AWS CLI a file descriptor, so no plaintext copy is written to a filesystem.
 
-6. The temporary file is deleted immediately after seeding.
+    ```bash
+    # Requires bash or zsh. Use Form B in a POSIX shell.
+    aws secretsmanager put-secret-value \
+      --secret-id nova/<service>/<secret_name> \
+      --secret-string file://<(<password-manager-cli> read "<pm-item-reference>" \
+        | jq -Rn '{password: input}')
+    ```
 
-7. The deployment ticket records only non-secret evidence: secret ARN/name, KMS key ID, AWSCURRENT version ID, approver, timestamp, and rotation-readiness status.
+    **Form B, temporary file created under a restrictive umask.** Set the umask *before* the file exists; creating the file and then running `chmod` leaves a window in which it is world-readable.
 
-```bash
-aws secretsmanager put-secret-value \
-  --secret-id nova/<service>/<secret_name> \
-  --secret-string file://<secure-temp-path>/<service>-secret.json
+    ```bash
+    umask 077                                   # every file created in this shell is 0600
+    SECURE_DIR="$(mktemp -d)"                   # encrypted local storage, or /dev/shm
+    SECRET_FILE="${SECURE_DIR}/<service>-secret.json"
 
-aws secretsmanager describe-secret \
-  --secret-id nova/<service>/<secret_name> \
-  --query "{Name:Name,VersionIdsToStages:VersionIdsToStages,KmsKeyId:KmsKeyId}"
-```
+    <password-manager-cli> read "<pm-item-reference>" \
+      | jq -Rn '{password: input}' > "${SECRET_FILE}"
+
+    ls -l "${SECRET_FILE}"                      # confirm 0600 before continuing
+    ```
+
+    !!! danger "Never place the value in argv"
+        Do not use `--secret-string "$(<password-manager-cli> read ...)"`, and do not hand-write the JSON in a heredoc. Command substitution puts the plaintext into the process argument list, where it is visible to `ps` and to any local process for the life of the call, which is strictly worse than the temporary file. A heredoc requires pasting the value into the terminal, which step 2 forbids.
+
+    !!! note "If no password-manager CLI is available"
+        Export the value from the password manager directly to the pre-created 0600 path using the manager's own save-to-file function. Do not route it through the terminal, the clipboard, or an editor buffer.
+
+    `jq -Rn '{password: input}'` reads one line from stdin and JSON-escapes it. Do not build the JSON by hand: a value containing `"`, `\`, or a newline produces a malformed document or a silently truncated secret.
+
+4. The first AWSCURRENT version is seeded with `put-secret-value` and a file reference. Form A performs this step inline; Form B uses the file created in step 3.
+
+    ```bash
+    aws secretsmanager put-secret-value \
+      --secret-id nova/<service>/<secret_name> \
+      --secret-string "file://${SECRET_FILE}"
+    ```
+
+5. Verification uses `describe-secret` only; `get-secret-value` is not used during deployment verification.
+
+    ```bash
+    aws secretsmanager describe-secret \
+      --secret-id nova/<service>/<secret_name> \
+      --query "{Name:Name,VersionIdsToStages:VersionIdsToStages,KmsKeyId:KmsKeyId}"
+    ```
+
+6. Form B only: the temporary file and directory are removed immediately after seeding.
+
+    ```bash
+    shred -u "${SECRET_FILE}" 2>/dev/null || rm -f "${SECRET_FILE}"
+    rmdir "${SECURE_DIR}"
+    unset SECRET_FILE SECURE_DIR
+    ```
+
+    !!! note "shred is not a guarantee"
+        On copy-on-write filesystems and SSDs with wear leveling, `shred` cannot reliably overwrite the original blocks. Prefer Form A, or place `SECURE_DIR` on a memory-backed path such as `/dev/shm` so no block reaches persistent storage.
+
+7. The deployment ticket records only non-secret evidence: secret ARN/name, KMS key ID, AWSCURRENT version ID, seeding path used (workstation, PAM, bastion, or CI), approver, timestamp, and rotation-readiness status.
 
 ## 6. GitOps Repository Layout
 
@@ -563,6 +616,8 @@ kubectl get secret <service>-app-secrets -n <namespace> \
 
 The disposable pod confirms the Secret can be mounted without exposing values. The command prints only the non-secret success string secret-mounted.
 
+The manifest satisfies the restricted Pod Security profile and the namespace resource controls that the cluster baseline applies in `clusters/production/` (Section 7). A pod without a `securityContext` or a `resources` block is rejected at admission in those namespaces before any mount is attempted. Run the check in the workload namespace where the Secret lives; the mount cannot be validated cross-namespace.
+
 ```bash
 cat <<'EOF' | kubectl apply -n <namespace> -f -
 apiVersion: v1
@@ -571,10 +626,29 @@ metadata:
   name: secret-mount-check
 spec:
   restartPolicy: Never
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
   containers:
     - name: secret-mount-check
       image: busybox:1.36
-      command: ["sh", "-ec", "test -s /mnt/secrets/DATABASE_PASSWORD && echo secret-mounted && sleep 30"]
+      command: ["sh", "-ec", "test -s /mnt/secrets/DATABASE_PASSWORD && echo secret-mounted"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi
       volumeMounts:
         - name: app-secrets
           mountPath: /mnt/secrets
@@ -583,12 +657,29 @@ spec:
     - name: app-secrets
       secret:
         secretName: <service>-app-secrets
+        defaultMode: 0440
 EOF
-kubectl wait --for=condition=Ready pod/secret-mount-check \
+kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/secret-mount-check \
   -n <namespace> --timeout=60s
 kubectl logs secret-mount-check -n <namespace>
-kubectl delete pod secret-mount-check -n <namespace>
+kubectl delete pod secret-mount-check -n <namespace> --ignore-not-found
 ```
+
+| Field | Why it is required |
+| --- | --- |
+| `runAsNonRoot: true` plus `runAsUser` | Restricted Pod Security requires non-root. `runAsNonRoot` alone against `busybox:1.36` fails at container start with `CreateContainerConfigError`, because the image's default user is root. The explicit UID is mandatory, not optional hardening. |
+| `allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`, `seccompProfile.type: RuntimeDefault` | Remaining restricted-profile requirements. Omitting any one rejects the pod at admission. |
+| `resources` requests and limits | The namespace baseline applies ResourceQuota and LimitRange. A pod with no resources block is rejected by a quota covering requests or limits unless a LimitRange supplies defaults. |
+| `automountServiceAccountToken: false` | A disposable debug pod in a namespace built on IRSA separation must not receive a projected ServiceAccount token. |
+| `fsGroup: 1000` with `defaultMode: 0440` | Makes the check self-contained. Kubernetes sets group ownership of the mounted Secret to the `fsGroup`, so the non-root UID can read it regardless of cluster defaults. |
+
+!!! warning "Mount mode and UID are coupled"
+    The default Secret mode of 0644 is world-readable, so the check passes under any UID. If the chart or a policy tightens the mode to 0400, a non-root container cannot read the file and `test -s` fails, which reads as a failed mount rather than a permissions problem. Set `defaultMode` and `fsGroup` explicitly, as above, so the result reflects the mount and nothing else.
+
+!!! note "kubectl compatibility"
+    `--for=jsonpath` requires kubectl 1.23 or later. The pod exits as soon as the check completes, so `--for=condition=Ready` is a race and may time out against a pod that already succeeded. On older clients, poll instead: `kubectl get pod secret-mount-check -n <namespace> -o jsonpath='{.status.phase}'`.
+
+**Pass criteria.** The pod reaches Succeeded, the log contains exactly `secret-mounted`, and the pod is deleted. If the pod is rejected at admission, treat it as an environment finding, not a secret finding: reconcile the manifest with the namespace's Pod Security level and resource controls before drawing any conclusion about the Secret.
 
 ### 8.3 Reloader Confirmation
 
@@ -787,7 +878,7 @@ The temporary file makes the Helm render fail closed under `set -euo pipefail`; 
 | Argo CD state | Screenshot or text showing Synced / Healthy | None |
 | ExternalSecret state | Ready=True, SecretSynced reason, recent refresh time | Secret value output |
 | Kubernetes Secret | Object exists and expected key names are present | Decoded data or base64 content |
-| Mount check | secret-mounted log line from disposable pod | cat/print of mounted file content |
+| Mount check | Disposable pod reached Succeeded; log shows only secret-mounted | cat/print of mounted file content |
 | Reloader rollout | Rollout status and pod creation times after Secret refresh | Secret payload |
 | Rollback | Revert PR link, approval, commit SHA, app health after sync | Manual kubectl patch not represented in Git |
 
@@ -806,7 +897,8 @@ The temporary file makes the Helm render fail closed under `set -euo pipefail`; 
 | `<revision-number>` | Argo CD history revision number | `42` |
 | `<root-app-name>` | App-of-Apps root Application name | `novadeploy-production-root` |
 | `<secret_name>` | Service-scoped Secrets Manager secret suffix | `db` |
-| `<secure-temp-path>` | Encrypted local directory used for temporary secret input | `/home/operator/secure-tmp` |
+| `<password-manager-cli>` | Approved password manager or PAM command-line client | `op` |
+| `<pm-item-reference>` | Item reference within the approved password manager | `op://Platform/nova-api-gateway-db/password` |
 | `<allow-window-id>` | Argo CD sync-window ID | `7` |
 | `<workload-sa-name>` | Workload Kubernetes ServiceAccount | `api-gateway-sa` |
 | `<eso-controller-namespace>` | Namespace where ESO runs | `external-secrets` |
