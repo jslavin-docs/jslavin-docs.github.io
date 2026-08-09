@@ -27,7 +27,7 @@ Nov 2024 – Present · Remote
 - Author design documentation for a secure AWS edge platform (Kubernetes, Argo CD, GitOps) whose rollout cut retail client hardware costs by 40%
 - Create process flow and network topology diagrams from working sessions with solutions architects and developers, shortening architecture review cycles by 25%
 - Codify triage, diagnostics, and escalation for 65 Prometheus alerts in the DevSecOps runbook used by on-call engineers
-- Write the 160-page user guide for managing clusters, nodes, namespaces, workloads, and applications
+- Write the 160-page user guide for managing clusters, nodes, namespaces, workloads, and applications across distributed edge locations
 - Document the access control model, secrets management, and certificate handling across user and machine-to-machine authentication
 
 ### ClearBlade
