@@ -2,8 +2,8 @@
 
 [![Deploy to GitHub Pages](https://github.com/jslavin-docs/jslavin-docs.github.io/actions/workflows/pages.yml/badge.svg)](https://github.com/jslavin-docs/jslavin-docs.github.io/actions/workflows/pages.yml)
 
-**Senior Technical Writer & Documentation Lead**  
-API • Cloud • Edge • IoT • GitOps • DevSecOps • Docs as Code
+**Lead Technical Writer**  
+API · Cloud · Edge · IoT · GitOps · DevSecOps · Docs as Code
 
 This repository contains the source for my technical writing portfolio, built with MkDocs Material and published with GitHub Pages. It demonstrates the same Docs as Code practices I use professionally: Markdown authoring, YAML configuration, Git version control, local build checks, and GitHub Actions automation.
 
@@ -14,7 +14,7 @@ This repository contains the source for my technical writing portfolio, built wi
 
 ## Focus areas
 
-API documentation · OpenAPI 3.0 · SDK documentation · Information architecture · Docs as Code · Cloud and edge computing · IoT · Kubernetes · GitOps · Argo CD · DevSecOps · Prometheus
+API documentation · OpenAPI · SDK documentation · Information architecture · Docs as Code · Cloud and edge computing · IoT · Kubernetes · GitOps · Argo CD · DevSecOps · Prometheus
 
 ## What this repo demonstrates
 
@@ -24,15 +24,6 @@ API documentation · OpenAPI 3.0 · SDK documentation · Information architectur
 - **GitHub Pages** — static-site publishing for a public technical writing portfolio
 - **Docs as Code workflow** — content authored in Markdown, configuration managed in YAML, and version-controlled in Git
 - **Documentation QA** — local preview and strict build checks before publishing
-
-## Built with
-
-- MkDocs Material
-- Markdown
-- HTML/CSS
-- GitHub Actions
-- GitHub Pages
-- Docs as Code workflow
 
 ## Repository structure
 
