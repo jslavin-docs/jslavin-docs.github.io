@@ -84,7 +84,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="https://github.com/jslavin-clearblade?tab=overview&amp;from=2023-01-01&amp;to=2023-12-31" target="_blank" rel="noopener">
     <span class="card-tag">GitHub · Contribution activity</span>
     <h3>ClearBlade Contribution Activity</h3>
-    <p>Contributed documentation across 23 ClearBlade repositories in 2023, with 135 public contributions covering the native code library reference, SDK READMEs, and developer kit documentation.</p>
+    <p>Maintained documentation across 23 ClearBlade repositories in 2023, with 135 public contributions covering the native code library reference, SDK READMEs, and developer kit documentation.</p>
     <span class="card-link">View activity →</span>
   </a>
 
