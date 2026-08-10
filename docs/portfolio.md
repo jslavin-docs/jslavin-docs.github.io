@@ -12,7 +12,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="../writing-samples/novadeploy-gitops-admin-guide-portfolio-cut/">
     <span class="card-tag">Amazon EKS · Argo CD · GitOps · DevSecOps</span>
     <h3>NovaDeploy GitOps Administration Guide – Portfolio Cut</h3>
-    <p>A 5–7-minute read covering the deployment path and stop checkpoints, GitOps and Terraform source-of-truth rules, secret handling with no plaintext values anywhere, architecture, verification, and rollback decisions. Includes a worked secret-refresh walkthrough and the CI check that enforces the Reloader restart guardrail.</p>
+    <p>A 5–7-minute cut of a fictional operator runbook, covering the deployment path and stop checkpoints, GitOps and Terraform source-of-truth rules, secret handling with no plaintext values anywhere, architecture, verification, and rollback decisions. Includes a worked secret-refresh walkthrough and the CI check that enforces the Reloader restart guardrail.</p>
     <span class="card-link">Read sample →</span>
   </a>
 
