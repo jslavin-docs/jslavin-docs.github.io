@@ -37,7 +37,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="https://docs.clearblade.com/iotenterprise/rest-api-query-schema" target="_blank" rel="noopener">
     <span class="card-tag">REST API · Query schema</span>
     <h3>REST API Query Schema Technical Reference</h3>
-    <p>Documented ClearBlade's REST API query schema, including SQL-to-JSON translation, filter-condition logic, and TypeScript interfaces for developers querying collections through the platform.</p>
+    <p>Detailed ClearBlade's REST API query schema, including SQL-to-JSON translation, filter-condition logic, and TypeScript interfaces for developers querying collections through the platform.</p>
     <span class="card-link">Read sample →</span>
   </a>
 
@@ -82,16 +82,16 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
 
 <div class="portfolio-grid">
   <a class="portfolio-card" href="https://github.com/jslavin-clearblade?tab=overview&amp;from=2023-01-01&amp;to=2023-12-31" target="_blank" rel="noopener">
-    <span class="card-tag">GitHub · 2023 activity</span>
+    <span class="card-tag">GitHub · Contribution activity</span>
     <h3>ClearBlade Contribution Activity</h3>
-    <p>135 public contributions across 23 ClearBlade repositories in 2023, spanning the native code library reference, SDK READMEs, and developer kit documentation.</p>
+    <p>Contributed documentation across 23 ClearBlade repositories in 2023, with 135 public contributions covering the native code library reference, SDK READMEs, and developer kit documentation.</p>
     <span class="card-link">View activity →</span>
   </a>
 
   <a class="portfolio-card" href="https://github.com/ClearBlade/native-libraries/commits/master/?author=jslavin-clearblade" target="_blank" rel="noopener">
     <span class="card-tag">Git · Docs as Code</span>
     <h3>Native Code Library Commits – ClearBlade</h3>
-    <p>28 commits to ClearBlade's public native-libraries documentation repository, June to October 2023, with reviewable diffs of the documentation changes.</p>
+    <p>Authored 28 commits to ClearBlade's public native-libraries documentation repository, each with a reviewable diff of the changes.</p>
     <span class="card-link">View commit history →</span>
   </a>
 </div>

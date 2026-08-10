@@ -17,6 +17,7 @@ description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, De
       <a class="button secondary" href="resume/">View resume</a>
       <a class="button secondary" href="mailto:jslavin.docs@gmail.com">Email</a>
       <a class="button secondary" href="https://www.linkedin.com/in/jeff-slavin" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="button secondary" href="https://github.com/jslavin-docs" target="_blank" rel="noopener">GitHub</a>
     </div>
   </div>
 </div>
@@ -25,7 +26,7 @@ description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, De
   <div class="metric-card"><span>40%</span><p>retail client hardware cost reduction supported by secure AWS edge platform documentation</p></div>
   <div class="metric-card"><span>60%</span><p>search-success improvement after Confluence-to-self-service portal redesign</p></div>
   <div class="metric-card"><span>30%</span><p>migration support-ticket reduction for GCP IoT Core-to-ClearBlade guidance</p></div>
-  <div class="metric-card"><span>Weeks → days</span><p>partner integration acceleration through OpenAPI-driven SDK generation</p></div>
+  <div class="metric-card"><span>Weeks → days</span><p>partner integration acceleration through the OpenAPI documentation behind SDK generation</p></div>
 </div>
 
 ## Specialties
@@ -41,11 +42,11 @@ description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, De
   </div>
   <div class="skill-card">
     <h3>Docs as Code and automation</h3>
-    <p>Git, GitHub, GitHub Actions, Bitbucket, Jenkins, MkDocs, GitBook, Confluence, Scroll Sites, Postman, Swagger, YAML, JSON, and Markdown.</p>
+    <p>Git, GitHub Actions, Bitbucket, Jenkins, MkDocs, GitBook, Confluence, Scroll Sites, Mermaid, Postman, Swagger, Python, Bash, YAML, JSON, and Markdown.</p>
   </div>
   <div class="skill-card">
     <h3>Documentation strategy</h3>
-    <p>Information architecture, content strategy, style guides, taxonomy, knowledge management, and cross-functional documentation leadership.</p>
+    <p>Information architecture, content strategy, style guides, taxonomy, metadata, AI-ready content structuring, knowledge management, and cross-functional documentation leadership.</p>
   </div>
   <div class="skill-card">
     <h3>Security and operations</h3>
