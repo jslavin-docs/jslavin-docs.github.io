@@ -11,14 +11,14 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
 <div class="portfolio-grid">
   <a class="portfolio-card" href="../writing-samples/novadeploy-gitops-admin-guide-portfolio-cut/">
     <span class="card-tag">Amazon EKS · Argo CD · GitOps · DevSecOps</span>
-    <h3>NovaDeploy GitOps Administration Guide - Portfolio Cut</h3>
+    <h3>NovaDeploy GitOps Administration Guide – Portfolio Cut</h3>
     <p>A 5–7-minute read covering the deployment path and stop checkpoints, GitOps and Terraform source-of-truth rules, secret handling with no plaintext values anywhere, architecture, verification, and rollback decisions. Includes a worked secret-refresh walkthrough and the CI check that enforces the Reloader restart guardrail.</p>
     <span class="card-link">Read sample →</span>
   </a>
 
   <a class="portfolio-card" href="../writing-samples/novadeploy-gitops-admin-guide-full-version/">
     <span class="card-tag">Amazon EKS · IRSA · KMS · ESO · Reloader</span>
-    <h3>NovaDeploy GitOps Administration Guide - Full Runbook</h3>
+    <h3>NovaDeploy GitOps Administration Guide – Full Runbook</h3>
     <p>The complete fictional operator runbook: Terraform-managed IAM, KMS, and Secrets Manager patterns, SecretStore and ESO setup, a rotation readiness gate, CI guardrails, verification down to the command level, break-glass rollback, and an evidence checklist. Start with the portfolio cut for a shorter read.</p>
     <span class="card-link">Read sample →</span>
   </a>
@@ -30,7 +30,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="https://docs.clearblade.com/iotenterprise/apis" target="_blank" rel="noopener">
     <span class="card-tag">OpenAPI 3.0 · SDK generation</span>
     <h3>OpenAPI 3.0 Interactive API Reference – ClearBlade IoT Enterprise</h3>
-    <p>Authored the OpenAPI 3.0 specification and interactive API reference for ClearBlade IoT Enterprise. The spec supported automated SDK generation for Python, Java, and Node.js, helping reduce partner integration timelines from weeks to days.</p>
+    <p>Documented the OpenAPI 3.0 specification behind the interactive API reference and SDK generation for ClearBlade IoT Enterprise, reducing partner integration time from weeks to days.</p>
     <span class="card-link">Read sample →</span>
   </a>
 
@@ -55,7 +55,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="https://docs.clearblade.com/iotcore/quick-start" target="_blank" rel="noopener">
     <span class="card-tag">Quick start · GCP IoT Core migration</span>
     <h3>Quick Start Guide – ClearBlade IoT Core</h3>
-    <p>Authored a step-by-step migration quick start with code samples and telemetry testing. The guide supported 250+ enterprises migrating from GCP IoT Core and reduced migration support tickets by 30%.</p>
+    <p>Authored a step-by-step quick start with code samples and telemetry testing, one of the migration guides that moved 250+ enterprises off GCP IoT Core onto ClearBlade, cutting support tickets by 30%.</p>
     <span class="card-link">Read sample →</span>
   </a>
 </div>
@@ -78,3 +78,20 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   </a>
 </div>
 
+## Public Contributions
+
+<div class="portfolio-grid">
+  <a class="portfolio-card" href="https://github.com/jslavin-clearblade?tab=overview&amp;from=2023-01-01&amp;to=2023-12-31" target="_blank" rel="noopener">
+    <span class="card-tag">GitHub · 2023 activity</span>
+    <h3>ClearBlade Contribution Activity</h3>
+    <p>135 public contributions across 23 ClearBlade repositories in 2023, spanning the native code library reference, SDK READMEs, and developer kit documentation.</p>
+    <span class="card-link">View activity →</span>
+  </a>
+
+  <a class="portfolio-card" href="https://github.com/ClearBlade/native-libraries/commits/master/?author=jslavin-clearblade" target="_blank" rel="noopener">
+    <span class="card-tag">Git · Docs as Code</span>
+    <h3>Native Code Library Commits – ClearBlade</h3>
+    <p>28 commits to ClearBlade's public native-libraries documentation repository, June to October 2023, with reviewable diffs of the documentation changes.</p>
+    <span class="card-link">View commit history →</span>
+  </a>
+</div>

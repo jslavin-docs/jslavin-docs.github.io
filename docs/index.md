@@ -9,9 +9,9 @@ description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, De
     <img class="hero-photo" src="assets/jeff-slavin.jpg" alt="Professional headshot of Jeff Slavin" />
   </div>
   <div class="hero-copy">
-    <p class="eyebrow">STRATEGIC TECHNICAL WRITER · DOCUMENTATION LEAD</p>
+    <p class="eyebrow">TECHNICAL WRITER · DOCUMENTATION LEAD</p>
     <h2 class="hero-title">GitOps, DevSecOps, API, cloud, edge, and IoT documentation that helps technical users move faster.</h2>
-    <p class="hero-summary">Clear user and developer documentation for complex API, cloud, edge, IoT, and DevSecOps systems, with a focus on Docs as Code, information architecture, OpenAPI, and scalable self-service content.</p>
+    <p class="hero-summary">Clear user and developer documentation for API, cloud, edge, IoT, and DevSecOps systems, with a focus on Docs as Code, information architecture, OpenAPI, and content structured for self-service and AI retrieval.</p>
     <div class="hero-actions">
       <a class="button primary" href="portfolio/">View portfolio</a>
       <a class="button secondary" href="resume/">View resume</a>
@@ -33,15 +33,15 @@ description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, De
 <div class="skills-grid">
   <div class="skill-card">
     <h3>Developer and API docs</h3>
-    <p>REST API references, OpenAPI 3.0 specifications, SDK docs, webhook guides, integration guides, and developer onboarding.</p>
+    <p>REST API references, OpenAPI specifications, SDK docs, webhook guides, integration guides, and developer onboarding.</p>
   </div>
   <div class="skill-card">
     <h3>Cloud and edge documentation</h3>
-    <p>AWS, GCP, Kubernetes, EKS, Terraform, Docker, Argo CD, Prometheus, Grafana, Linux, AWS CLI, and gcloud CLI.</p>
+    <p>AWS, GCP, Kubernetes, EKS, Terraform, Docker, Argo CD, Prometheus, Grafana, and Linux.</p>
   </div>
   <div class="skill-card">
     <h3>Docs as Code and automation</h3>
-    <p>Git, GitHub, GitHub Actions, Bitbucket, Jenkins, MkDocs, Astro, GitBook, Confluence, Scroll Sites, Postman, Swagger, YAML, JSON, and Markdown.</p>
+    <p>Git, GitHub, GitHub Actions, Bitbucket, Jenkins, MkDocs, GitBook, Confluence, Scroll Sites, Postman, Swagger, YAML, JSON, and Markdown.</p>
   </div>
   <div class="skill-card">
     <h3>Documentation strategy</h3>
