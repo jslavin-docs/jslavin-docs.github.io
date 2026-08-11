@@ -5,7 +5,7 @@
 **Lead Technical Writer**  
 API · Cloud · Edge · IoT · GitOps · DevSecOps · Docs as Code
 
-This repository contains the source for my technical writing portfolio, built with MkDocs Material and published with GitHub Pages. It demonstrates the same Docs as Code practices I use professionally: Markdown authoring, YAML configuration, Git version control, local build checks, and GitHub Actions automation.
+This repository contains the source for my technical writing portfolio, built with MkDocs Material and published with GitHub Pages. It demonstrates the same Docs as Code practices I use professionally: Markdown authoring, YAML configuration, Git version control, strict build checks and link validation in CI, and GitHub Actions automation.
 
 - **Live portfolio:** https://jslavin-docs.github.io/
 - **Resume:** https://jslavin-docs.github.io/resume/
@@ -20,25 +20,30 @@ API documentation · OpenAPI · SDK documentation · Information architecture ·
 
 - **MkDocs Material** — custom theme configuration, navigation tabs, admonitions, code copy, and permalink anchors
 - **Custom CSS** — hero layout, metric cards, portfolio grid, and skill cards layered on top of the Material theme
-- **GitHub Actions CI/CD** — automated site build workflow on pushes to `main`
+- **GitHub Actions CI/CD** — build, quality, and audit jobs on every push to `main`, with deploy gated on the first two
 - **GitHub Pages** — static-site publishing for a public technical writing portfolio
 - **Docs as Code workflow** — content authored in Markdown, configuration managed in YAML, and version-controlled in Git
-- **Documentation QA** — local preview and strict build checks before publishing
+- **Documentation QA** — `mkdocs build --strict` and an internal link check run in CI; a broken link or build warning blocks the deploy
 
 ## Repository structure
 
 ```text
 jslavin-docs.github.io/
-├── .github/workflows/pages.yml   # GitHub Actions workflow for build/deploy
+├── .github/workflows/pages.yml   # Build, quality, audit, and deploy workflow
 ├── docs/                         # Markdown source files and assets
 │   ├── index.md                  # Portfolio homepage
 │   ├── portfolio.md              # Writing samples overview
 │   ├── resume.md                 # Resume page
 │   ├── writing-samples/          # Markdown portfolio samples
-│   └── assets/                   # Custom CSS and images
+│   ├── assets/                   # Custom CSS, images, and resume PDF
+│   └── robots.txt                # Crawler directives
+├── scripts/                      # Utility scripts
+│   └── check_internal_links.py   # Internal link checker run in CI
 ├── mkdocs.yml                    # MkDocs Material configuration
 ├── requirements.txt              # Python dependencies
+├── .lighthouserc.json            # Lighthouse CI audit thresholds
 ├── .gitignore                    # Local/private file exclusions
+├── LICENSE                       # MIT for source; content all rights reserved
 └── README.md                     # Repository overview and setup
 ```
 
