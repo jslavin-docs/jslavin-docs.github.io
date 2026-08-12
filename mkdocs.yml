@@ -58,9 +58,11 @@ plugins:
   - search
   - social
 extra:
+  analytics:
+    provider: google
+    property: G-4K07NSBTQL
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/jslavin-docs
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/jeff-slavin
-
