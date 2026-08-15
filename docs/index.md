@@ -11,7 +11,7 @@ description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, De
   <div class="hero-copy">
     <p class="eyebrow">TECHNICAL WRITER · DOCUMENTATION LEAD</p>
     <h2 class="hero-title">GitOps, DevSecOps, API, cloud, edge, and IoT documentation that helps technical users move faster.</h2>
-    <p class="hero-summary">Clear user and developer documentation for API, cloud, edge, IoT, and DevSecOps systems, with a focus on Docs as Code, information architecture, OpenAPI, and content structured for self-service and AI retrieval.</p>
+    <p class="hero-summary">Clear user and developer documentation, with a focus on Docs as Code, information architecture, OpenAPI, and content structured for self-service and AI retrieval.</p>
     <div class="hero-actions">
       <a class="button primary" href="portfolio/">Portfolio</a>
       <a class="button secondary" href="resume/">Resume</a>
