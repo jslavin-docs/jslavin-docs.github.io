@@ -40,7 +40,7 @@ Oct 2022 – Nov 2024 · Remote
 - Documented the OpenAPI specification behind the interactive API reference and SDK generation, reducing partner integration time from weeks to days
 - Authored the migration guides that moved 250+ enterprises off GCP IoT Core onto ClearBlade, cutting support tickets by 30%
 - Rebuilt Confluence content into a self-service portal in Scroll Sites, with a new taxonomy that raised search success rates by 60%
-- Restructured Confluence topics to be self-contained and consistently labeled, then revised them to improve Rovo's AI answers across question types
+- Restructured Confluence topics to be self-contained and consistently labeled, then revised them to improve Rovo's RAG-based AI answers across question types
 - Advised the technical support organization on end-user documentation practices, shaping how the team delivered guidance to customers
 
 ### ODEM
@@ -92,7 +92,7 @@ Git · GitHub Actions · Bitbucket · Jenkins · Jira · Postman · OpenAPI · S
 
 ### Technical Domains
 
-Cloud and Edge Computing · IoT · API Integration · Cybersecurity · IAM · Zero Trust Architecture · Cloud Networking · GenAI
+Cloud and Edge Computing · IoT · API Integration · Cybersecurity · IAM · Zero Trust Architecture · Cloud Networking · GenAI · RAG
 
 ### Methodologies
 
