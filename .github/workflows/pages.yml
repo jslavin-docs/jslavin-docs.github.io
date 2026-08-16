@@ -76,6 +76,7 @@ jobs:
     name: Lighthouse CI advisory audit
     runs-on: ubuntu-latest
     continue-on-error: true
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
