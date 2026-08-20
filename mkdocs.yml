@@ -57,6 +57,9 @@ markdown_extensions:
 plugins:
   - search
   - social
+
+hooks:
+  - hooks.py
 extra:
   analytics:
     provider: google

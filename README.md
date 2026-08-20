@@ -23,6 +23,7 @@ API documentation · OpenAPI · SDK documentation · Information architecture ·
 - **GitHub Actions CI/CD** — build, quality, and audit jobs on every push to `main`, with deploy gated on the first two
 - **GitHub Pages** — static-site publishing for a public technical writing portfolio
 - **Docs as Code workflow** — content authored in Markdown, configuration managed in YAML, and version-controlled in Git
+- **AI-retrieval artifacts** — `llms.txt`, a build-generated `llms-full.txt`, Markdown versions of every page, and an agent instruction file (`skill.md`) expose the site content to LLM-based tools via the MkDocs hook in `hooks.py`
 - **Documentation QA** — `mkdocs build --strict` and an internal link check run in CI; a broken link or build warning blocks the deploy
 
 ## Repository structure
@@ -36,10 +37,13 @@ jslavin-docs.github.io/
 │   ├── resume.md                 # Resume page
 │   ├── writing-samples/          # Markdown portfolio samples
 │   ├── assets/                   # Custom CSS, images, and resume PDF
+│   ├── llms.txt                  # Curated content index for LLM tools
 │   └── robots.txt                # Crawler directives
 ├── scripts/                      # Utility scripts
 │   └── check_internal_links.py   # Internal link checker run in CI
 ├── mkdocs.yml                    # MkDocs Material configuration
+├── hooks.py                      # Build hooks: llms + page .md exports, skill.md
+├── skill.md                      # Agent skill file, served raw at /skill.md
 ├── requirements.txt              # Python dependencies
 ├── .lighthouserc.json            # Lighthouse CI audit thresholds
 ├── .gitignore                    # Local/private file exclusions
