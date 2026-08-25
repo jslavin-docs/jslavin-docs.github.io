@@ -27,6 +27,7 @@ from __future__ import annotations
 import re
 import shutil
 from pathlib import Path
+from pathlib import PurePosixPath
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -89,12 +90,25 @@ def _clean(text: str) -> str:
     return re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
 
 
-def _absolutize(text: str, page_url: str) -> str:
-    """Resolve relative links against the page they came from."""
-    return RELATIVE_LINK.sub(
-        lambda m: m.group(1) + urljoin(page_url, m.group(2)) + m.group(3),
-        text,
-    )
+def _absolutize(text: str, site_url: str, rel_path: str) -> str:
+    """Resolve relative links the way MkDocs does.
+
+    Relative targets are resolved against the source file's folder, not
+    the published page URL, and a .md target becomes its clean page URL.
+    """
+    parent = str(PurePosixPath(rel_path).parent)
+    base = site_url + ("" if parent == "." else parent + "/")
+
+    def fix(match: re.Match) -> str:
+        target, _, fragment = match.group(2).partition("#")
+        url = urljoin(base, target)
+        if url.endswith(".md"):
+            url = url[: -len(".md")] + "/"
+        if fragment:
+            url += "#" + fragment
+        return match.group(1) + url + match.group(3)
+
+    return RELATIVE_LINK.sub(fix, text)
 
 
 def _page_url(site_url: str, rel_path: str) -> str:
@@ -155,7 +169,7 @@ def on_post_build(config) -> None:
             header.append("Description: " + description)
         header.append("=" * 72)
         sections.append(
-            "\n".join(header) + "\n\n" + _absolutize(body, url).rstrip() + "\n"
+            "\n".join(header) + "\n\n" + _absolutize(body, site_url, rel).rstrip() + "\n"
         )
 
         if rel == "index.md":
