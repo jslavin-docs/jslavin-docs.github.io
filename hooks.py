@@ -14,9 +14,9 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
 
 Both exports are cleaned before they are written: presentation-only
 attribute lists are removed and raw HTML layout blocks are converted
-back to Markdown, so agents receive prose and not markup. llms-full.txt
-additionally resolves relative links against each page's URL, because it
-is read as a standalone file.
+back to Markdown, so agents receive prose and not markup. Relative links are
+resolved to absolute URLs so they work from any location the export is
+read in.
 
 docs/llms.txt (the curated index) is a plain static file that MkDocs
 copies through on its own; no hook is needed for it.
@@ -168,9 +168,8 @@ def on_post_build(config) -> None:
         if description:
             header.append("Description: " + description)
         header.append("=" * 72)
-        sections.append(
-            "\n".join(header) + "\n\n" + _absolutize(body, site_url, rel).rstrip() + "\n"
-        )
+        body = _absolutize(body, site_url, rel)
+        sections.append("\n".join(header) + "\n\n" + body.rstrip() + "\n")
 
         if rel == "index.md":
             md_out = site_dir / "index.md"
