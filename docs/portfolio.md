@@ -95,3 +95,12 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
     <span class="card-link">View commit history →</span>
   </a>
 </div>
+
+## Built for AI retrieval
+
+The site has machine-readable files so AI assistants can give accurate answers about this work:
+
+- **[skill.md](https://jslavin-docs.github.io/skill.md)** — an instruction file that keeps AI answers grounded in the published content.
+- **[llms.txt](https://jslavin-docs.github.io/llms.txt)** — index of the site's pages.
+- **[llms-full.txt](https://jslavin-docs.github.io/llms-full.txt)** — the site's complete Markdown content in one file.
+- Every page is also available as plain Markdown.
