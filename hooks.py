@@ -12,14 +12,25 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
    index.md (e.g. /portfolio/index.md), per the llms.txt v2 spec, so
    llms.txt links can point agents at LLM-friendly page versions.
 
+Both exports are cleaned before they are written: presentation-only
+attribute lists are removed and raw HTML layout blocks are converted
+back to Markdown, so agents receive prose and not markup. llms-full.txt
+additionally resolves relative links against each page's URL, because it
+is read as a standalone file.
+
 docs/llms.txt (the curated index) is a plain static file that MkDocs
 copies through on its own; no hook is needed for it.
 """
 
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
+from urllib.parse import urljoin
+
+from bs4 import BeautifulSoup
+from markdownify import markdownify
 
 # Published pages in reading order. Any other .md file added to docs/
 # later is appended alphabetically; files in EXCLUDE are never exported.
@@ -31,6 +42,59 @@ PAGE_ORDER = [
     "writing-samples/novadeploy-gitops-admin-guide-full-version.md",
 ]
 EXCLUDE = {"404.md"}
+
+# Trailing { .class } / { #id } attribute lists: styling only, no meaning.
+ATTR_LIST = re.compile(r"[ \t]*\{[ \t]*[.#][^}\n]*\}[ \t]*$", re.MULTILINE)
+# Top-level raw HTML layout blocks in the Markdown source.
+HTML_BLOCK = re.compile(
+    r"^<(div|figure|section)\b.*?^</\1>\s*$", re.MULTILINE | re.DOTALL
+)
+# Markdown links and images with a relative destination.
+RELATIVE_LINK = re.compile(r"(!?\[[^\]]*\]\()(?!\w+:|#|/)([^)\s]+)(\))")
+
+
+def _unwrap_cards(html: str) -> str:
+    """Move a card's link onto its heading.
+
+    Card markup wraps a whole block in one <a>, which would otherwise
+    convert into a single multi-line link. This produces a normal
+    heading link followed by plain description text instead.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    for anchor in soup.find_all("a", href=True):
+        heading = anchor.find(["h2", "h3", "h4"])
+        if heading is None:
+            continue
+        link = soup.new_tag("a", href=anchor["href"])
+        link.string = heading.get_text(strip=True)
+        heading.clear()
+        heading.append(link)
+        for span in anchor.find_all("span", class_="card-link"):
+            span.decompose()
+        anchor.unwrap()
+    return str(soup)
+
+
+def _html_to_markdown(match: re.Match) -> str:
+    converted = markdownify(
+        _unwrap_cards(match.group(0)), heading_style="ATX", strip=["img"]
+    )
+    return re.sub(r"\n{3,}", "\n\n", converted).strip() + "\n"
+
+
+def _clean(text: str) -> str:
+    """Strip presentation markup so the export is prose, not layout."""
+    text = ATTR_LIST.sub("", text)
+    text = HTML_BLOCK.sub(_html_to_markdown, text)
+    return re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
+
+
+def _absolutize(text: str, page_url: str) -> str:
+    """Resolve relative links against the page they came from."""
+    return RELATIVE_LINK.sub(
+        lambda m: m.group(1) + urljoin(page_url, m.group(2)) + m.group(3),
+        text,
+    )
 
 
 def _page_url(site_url: str, rel_path: str) -> str:
@@ -83,11 +147,17 @@ def on_post_build(config) -> None:
         description, body = _split_front_matter(
             (docs_dir / rel).read_text(encoding="utf-8")
         )
-        header = ["=" * 72, "Page: " + _page_url(site_url, rel)]
+        body = _clean(body)
+        url = _page_url(site_url, rel)
+
+        header = ["=" * 72, "Page: " + url]
         if description:
             header.append("Description: " + description)
         header.append("=" * 72)
-        sections.append("\n".join(header) + "\n\n" + body.rstrip() + "\n")
+        sections.append(
+            "\n".join(header) + "\n\n" + _absolutize(body, url).rstrip() + "\n"
+        )
+
         if rel == "index.md":
             md_out = site_dir / "index.md"
         else:
