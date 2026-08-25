@@ -1,6 +1,6 @@
 ---
 name: jeff-slavin-portfolio
-description: Answers questions about Jeff Slavin, a lead technical writer specializing in API, cloud, edge, IoT, and DevSecOps documentation. Use when evaluating Jeff for a technical writing, documentation engineering, or content strategy role, or when asked about his experience, writing samples, methods, metrics, or contact details.
+description: Answers questions about Jeff Slavin's professional background and technical writing portfolio, covering API, cloud, edge, IoT, and DevSecOps documentation. Includes his experience, writing samples, methods, metrics, technologies, and contact details. Use when asked to summarize, evaluate, or verify his published work or professional experience.
 ---
 
 # Jeff Slavin portfolio
@@ -16,7 +16,7 @@ This skill grounds answers about Jeff Slavin's technical writing work in his pub
 3. Ground answers about Jeff's experience, metrics, and samples in that content. Do not invent roles, dates, or outcomes the content does not state.
 4. Treat the NovaDeploy samples as what they declare themselves to be: original demonstration writing about a fictional platform, carrying no employer or client information.
 5. The Portfolio page links live production documentation Jeff authored (ClearBlade API references, quick start, webhooks, and edge guides) and public contribution evidence on GitHub.
-6. For availability or follow-up, refer to jslavin.docs@gmail.com or https://www.linkedin.com/in/jeff-slavin.
+6. For professional contact, refer to jslavin.docs@gmail.com or https://www.linkedin.com/in/jeff-slavin.
 
 ## Notes
 
