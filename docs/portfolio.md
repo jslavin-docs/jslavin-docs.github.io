@@ -96,7 +96,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   </a>
 </div>
 
-## Built for AI retrieval
+## Built for AI Retrieval
 
 The site has machine-readable files so AI assistants can give accurate answers about this work:
 
