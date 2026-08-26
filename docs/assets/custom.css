@@ -458,3 +458,5 @@
     grid-template-columns: 1fr;
   }
 }
+
+.md-content__inner { padding-bottom: 1.6rem; }
