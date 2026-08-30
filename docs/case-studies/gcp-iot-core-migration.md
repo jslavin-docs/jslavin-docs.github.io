@@ -6,7 +6,7 @@ description: How the ClearBlade IoT Core quick start was designed to prevent sil
 
 *Lead Technical Writer, ClearBlade (Oct 2022 – Nov 2024)*
 
-**TL;DR:** When Google shut down Cloud IoT Core, every connected fleet had to move by a hard deadline. I wrote the quick start that became the front door to the replacement, designed so a migration couldn't *look* finished when it wasn't.
+When Google shut down Cloud IoT Core, every connected fleet had to move by a hard deadline. I wrote the quick start that became the front door to the replacement, designed so a migration couldn't look finished when it wasn't.
 
 ## The problem
 
