@@ -30,6 +30,7 @@ nav:
   - Resume: resume.md
 
 not_in_nav: |
+  /case-studies/gcp-iot-core-migration.md
   /404.md
   /writing-samples/novadeploy-gitops-admin-guide-portfolio-cut.md
   /writing-samples/novadeploy-gitops-admin-guide-full-version.md
