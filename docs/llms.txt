@@ -19,6 +19,10 @@ Each page linked below is also served as clean Markdown at its URL plus index.md
 
 NovaDeploy is a fictional platform: both samples are original demonstration writing and contain no employer or client information. Live production documentation Jeff authored (ClearBlade API references, quick start, webhooks, and edge guides) is linked from the [Portfolio](https://jslavin-docs.github.io/portfolio/) page.
 
+## Case studies
+
+- [Case Study: GCP IoT Core Migration](https://jslavin-docs.github.io/case-studies/gcp-iot-core-migration/index.md): how the ClearBlade IoT Core quick start was designed to prevent silent migration failures during Google's shutdown of Cloud IoT Core
+
 ## Optional
 
 - [LinkedIn](https://www.linkedin.com/in/jeff-slavin)
