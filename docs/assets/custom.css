@@ -410,7 +410,7 @@
 }
 
 .portfolio-card .card-link + .card-link {
-  margin-left: 1.25rem;
+  margin-left: 2rem;
 }
 
 /* Resume-only spacing. Add { .resume-page-title } to the first H1 in docs/resume.md. */
