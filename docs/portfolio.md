@@ -52,12 +52,13 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
 ## End-User & Onboarding Documentation
 
 <div class="portfolio-grid single-row">
-  <a class="portfolio-card" href="https://docs.clearblade.com/iotcore/quick-start" target="_blank" rel="noopener">
+  <div class="portfolio-card">
     <span class="card-tag">Quick start · GCP IoT Core migration</span>
     <h3>Quick Start Guide – ClearBlade IoT Core</h3>
     <p>Authored a step-by-step quick start with code samples and telemetry testing, one of the migration guides that moved 250+ enterprises off GCP IoT Core onto ClearBlade, cutting support tickets by 30%.</p>
-    <span class="card-link">Read sample →</span>
-  </a>
+    <a class="card-link" href="https://docs.clearblade.com/iotcore/quick-start" target="_blank" rel="noopener">Read sample →</a>
+    <a class="card-link" href="/case-studies/gcp-iot-core-migration/">Read case study →</a>
+  </div>
 </div>
 
 ## Edge Computing Documentation
