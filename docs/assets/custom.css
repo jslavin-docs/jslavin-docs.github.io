@@ -464,3 +464,6 @@
 }
 
 .md-content__inner { padding-bottom: 1.6rem; }
+
+.md-typeset h1 { margin-bottom: 0.65rem; }
+.md-typeset h1 + p { margin-top: 0.35rem; }
