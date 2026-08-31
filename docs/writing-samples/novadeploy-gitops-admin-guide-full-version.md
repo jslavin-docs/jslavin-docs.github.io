@@ -4,10 +4,10 @@ description: "Full fictional NovaDeploy GitOps administration guide covering Ama
 
 # NovaDeploy Platform: GitOps Administration Guide
 
-This writing sample is the full fictional operator runbook for deploying services to Amazon EKS with Argo CD. It shows how complex EKS, IAM, KMS, secrets, GitOps, and rollback workflows can be turned into prescriptive production guidance.
-
 *Deploying Services to Amazon EKS with Argo CD*  
 Version 1.0 | Status: Full runbook | Written by: Jeff Slavin
+
+This writing sample is the full fictional operator runbook for deploying services to Amazon EKS with Argo CD. It shows how complex EKS, IAM, KMS, secrets, GitOps, and rollback workflows can be turned into prescriptive production guidance.
 
 [Read the portfolio cut.](novadeploy-gitops-admin-guide-portfolio-cut.md)
 
