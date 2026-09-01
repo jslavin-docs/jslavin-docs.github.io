@@ -397,7 +397,15 @@
 
 /* Keep card CTAs visually clear on homepage and portfolio cards. */
 
+.feature-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 
+@media (max-width: 560px) {
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* Card CTA links. */
 .portfolio-card .card-link,
