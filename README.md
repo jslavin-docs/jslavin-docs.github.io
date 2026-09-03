@@ -31,11 +31,13 @@ API documentation · OpenAPI · SDK documentation · Information architecture ·
 ```text
 jslavin-docs.github.io/
 ├── .github/workflows/pages.yml   # Build, quality, audit, and deploy workflow
+├── .github/dependabot.yml        # Monthly grouped dependency updates
 ├── docs/                         # Markdown source files and assets
 │   ├── index.md                  # Portfolio homepage
 │   ├── portfolio.md              # Writing samples overview
 │   ├── resume.md                 # Resume page
 │   ├── writing-samples/          # Markdown portfolio samples
+│   ├── case-studies/             # Case study pages
 │   ├── assets/                   # Custom CSS, images, and resume PDF
 │   ├── llms.txt                  # Curated content index for LLM tools
 │   └── robots.txt                # Crawler directives
