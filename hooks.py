@@ -39,10 +39,11 @@ PAGE_ORDER = [
     "index.md",
     "portfolio.md",
     "resume.md",
+    "case-studies/gcp-iot-core-migration.md",
     "writing-samples/novadeploy-gitops-admin-guide-portfolio-cut.md",
     "writing-samples/novadeploy-gitops-admin-guide-full-version.md",
 ]
-EXCLUDE = {"404.md"}
+EXCLUDE = set()
 
 # Trailing { .class } / { #id } attribute lists: styling only, no meaning.
 ATTR_LIST = re.compile(r"[ \t]*\{[ \t]*[.#][^}\n]*\}[ \t]*$", re.MULTILINE)
