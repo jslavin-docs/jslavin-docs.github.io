@@ -9,7 +9,7 @@ Each page linked below is also served as clean Markdown at its URL plus index.md
 ## Pages
 
 - [Home](https://jslavin-docs.github.io/index.md): positioning, specialties, headline metrics, and certifications
-- [Portfolio](https://jslavin-docs.github.io/portfolio/index.md): ten samples across GitOps and DevSecOps, API and developer, end-user onboarding, and edge computing documentation, plus public contribution evidence
+- [Portfolio](https://jslavin-docs.github.io/portfolio/index.md): eight samples across GitOps and DevSecOps, API and developer, end-user onboarding, and edge computing documentation, plus two public-contribution links
 - [Resume](https://jslavin-docs.github.io/resume/index.md): full work history and skills ([PDF version](https://jslavin-docs.github.io/assets/Jeff-Slavin-Resume.pdf))
 
 ## Writing samples
