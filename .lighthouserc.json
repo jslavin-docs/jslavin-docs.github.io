@@ -8,7 +8,8 @@
         "http://localhost:8000/portfolio/",
         "http://localhost:8000/resume/",
         "http://localhost:8000/writing-samples/novadeploy-gitops-admin-guide-portfolio-cut/",
-        "http://localhost:8000/writing-samples/novadeploy-gitops-admin-guide-full-version/"
+        "http://localhost:8000/writing-samples/novadeploy-gitops-admin-guide-full-version/",
+        "http://localhost:8000/case-studies/gcp-iot-core-migration/"
       ],
       "numberOfRuns": 3,
       "settings": {
