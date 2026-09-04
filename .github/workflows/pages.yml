@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -124,7 +127,7 @@ jobs:
     needs:
       - build
       - quality
-    if: ${{ !github.event.repository.private }}
+    if: ${{ github.event_name != 'pull_request' && !github.event.repository.private }}
     permissions:
       pages: write
       id-token: write
