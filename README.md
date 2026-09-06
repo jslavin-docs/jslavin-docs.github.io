@@ -42,9 +42,10 @@ jslavin-docs.github.io/
 │   ├── llms.txt                  # Curated content index for LLM tools
 │   └── robots.txt                # Crawler directives
 ├── scripts/                      # Utility scripts
-│   └── check_internal_links.py   # Internal link checker run in CI
+│   ├── check_internal_links.py   # Internal link checker run in CI
+│   └── render_diagram.py         # Regenerate the shared NovaDeploy SVG
 ├── mkdocs.yml                    # MkDocs Material configuration
-├── hooks.py                      # Build hooks: llms + page .md exports, skill.md
+├── hooks.py                      # Pre-rendered diagram and AI export build hooks
 ├── skill.md                      # Agent skill file, served raw at /skill.md
 ├── requirements.txt              # Python dependencies
 ├── .lighthouserc.json            # Lighthouse CI audit thresholds
@@ -97,3 +98,15 @@ Check the site before publishing:
 ```bash
 mkdocs build --strict
 ```
+
+## Update the NovaDeploy diagram
+
+Both NovaDeploy samples use a shared SVG generated from their Mermaid blocks, so visitors' browsers do not need to generate the diagram. The original Mermaid source remains in the Markdown files and AI exports.
+
+After updating the Mermaid block in both samples, keep the blocks identical and regenerate the SVG and its metadata:
+
+```bash
+python scripts/render_diagram.py
+```
+
+Regeneration requires Node.js and uses Mermaid CLI 11.17.0. Normal site builds use the checked-in SVG and do not require Node.js. Commit the updated Markdown, SVG, and JSON metadata together; the build rejects a diagram that no longer matches its source.

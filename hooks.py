@@ -1,4 +1,4 @@
-"""MkDocs build hooks for AI-retrieval artifacts.
+"""MkDocs build hooks for pre-rendered diagrams and AI-retrieval artifacts.
 
 Runs automatically during `mkdocs build` (including --strict CI builds):
 
@@ -11,6 +11,9 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
 3. Publishes a clean Markdown copy of every page at its own URL plus
    index.md (e.g. /portfolio/index.md), per the llms.txt v2 spec, so
    llms.txt links can point agents at LLM-friendly page versions.
+4. Substitutes the checked-in NovaDeploy SVG when rendering its two
+   sample pages, avoiding browser-side Mermaid rendering. The original
+   Markdown and its Mermaid source remain intact in the AI exports.
 
 Both exports are cleaned before they are written: presentation-only
 attribute lists are removed and raw HTML layout blocks are converted
@@ -24,6 +27,8 @@ copies through on its own; no hook is needed for it.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 import shutil
 from pathlib import Path
@@ -32,6 +37,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 from markdownify import markdownify
+from mkdocs.exceptions import PluginError
 
 # Published pages in reading order. Any other .md file added to docs/
 # later is appended alphabetically; files in EXCLUDE are never exported.
@@ -45,6 +51,15 @@ PAGE_ORDER = [
 ]
 EXCLUDE = set()
 
+NOVADEPLOY_PAGES = {
+    "writing-samples/novadeploy-gitops-admin-guide-portfolio-cut.md",
+    "writing-samples/novadeploy-gitops-admin-guide-full-version.md",
+}
+MERMAID_FENCE = re.compile(
+    r"^```mermaid[ \t]*\n(.*?)^```[ \t]*$", re.MULTILINE | re.DOTALL
+)
+DIAGRAM_PATH = Path("assets/diagrams/novadeploy-architecture.svg")
+
 # Trailing { .class } / { #id } attribute lists: styling only, no meaning.
 ATTR_LIST = re.compile(r"[ \t]*\{[ \t]*[.#][^}\n]*\}[ \t]*$", re.MULTILINE)
 # Top-level raw HTML layout blocks in the Markdown source.
@@ -53,6 +68,50 @@ HTML_BLOCK = re.compile(
 )
 # Markdown links and images with a relative destination.
 RELATIVE_LINK = re.compile(r"(!?\[[^\]]*\]\()(?!\w+:|#|/)([^)\s]+)(\))")
+
+
+def on_page_markdown(markdown, page, config, files):
+    """Use the saved diagram only when it matches this page's source."""
+    if page.file.src_uri not in NOVADEPLOY_PAGES:
+        return markdown
+
+    regenerate = (
+        "Keep the Mermaid blocks in both NovaDeploy samples identical, "
+        "then run `python scripts/render_diagram.py`."
+    )
+    fences = list(MERMAID_FENCE.finditer(markdown))
+    if len(fences) != 1:
+        raise PluginError(
+            f"{page.file.src_uri}: expected one NovaDeploy Mermaid diagram. "
+            + regenerate
+        )
+
+    source = fences[0].group(1).strip() + "\n"
+    svg_path = Path(config["docs_dir"]) / DIAGRAM_PATH
+    try:
+        svg_bytes = svg_path.read_bytes()
+        svg = svg_bytes.decode("utf-8")
+        metadata = json.loads(svg_path.with_suffix(".json").read_text("utf-8"))
+    except (OSError, UnicodeError, ValueError) as exc:
+        raise PluginError(
+            "Cannot read the pre-rendered NovaDeploy diagram or its metadata. "
+            + regenerate
+        ) from exc
+
+    source_sha256 = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    svg_sha256 = hashlib.sha256(svg_bytes).hexdigest()
+    if not isinstance(metadata, dict) or (
+        metadata.get("source_sha256") != source_sha256
+        or metadata.get("svg_sha256") != svg_sha256
+    ):
+        raise PluginError(
+            f"{page.file.src_uri}: the pre-rendered NovaDeploy diagram is stale "
+            "or has been modified. " + regenerate
+        )
+
+    replacement = '\n<div class="prerendered-diagram">\n' + svg.strip() + "\n</div>\n"
+    fence = fences[0]
+    return markdown[:fence.start()] + replacement + markdown[fence.end():]
 
 
 def _unwrap_cards(html: str) -> str:

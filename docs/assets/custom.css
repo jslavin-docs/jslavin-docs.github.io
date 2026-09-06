@@ -473,5 +473,12 @@
 
 .md-content__inner { padding-bottom: 1.6rem; }
 
+/* Match the original Mermaid wrapper without loading its browser renderer. */
+.prerendered-diagram {
+  line-height: normal;
+  margin: 1em 0;
+}
+.prerendered-diagram foreignObject { overflow: visible; }
+
 .md-typeset h1 { margin-bottom: 0.65rem; }
 .md-typeset h1 + p { margin-top: 0.35rem; }

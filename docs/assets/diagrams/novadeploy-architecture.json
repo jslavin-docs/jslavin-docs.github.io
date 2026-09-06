@@ -1,0 +1,7 @@
+{
+  "source_sha256": "2dfa5ce2e2488aa80512e9fd5c4384b5e67f81021cf6e5cc3a1f08268becd60c",
+  "svg_sha256": "1fa484939042667f8420725921e92086960451e3f20bf4bde846632b9d41467d",
+  "width": 728.4375,
+  "height": 1899.0,
+  "renderer": "@mermaid-js/mermaid-cli@11.17.0"
+}
