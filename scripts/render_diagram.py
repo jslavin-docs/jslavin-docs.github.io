@@ -42,6 +42,8 @@ def main() -> None:
         raise SystemExit("The two NovaDeploy diagrams differ; update both before regenerating.")
 
     mmdc = shutil.which("mmdc")
+    if mmdc and subprocess.check_output([mmdc, "--version"], text=True).strip() != "11.17.0":
+        mmdc = None
     command = [mmdc] if mmdc else [
         "npx", "--yes", "--package", "@mermaid-js/mermaid-cli@11.17.0", "mmdc"
     ]
@@ -81,7 +83,7 @@ def main() -> None:
         "renderer": "@mermaid-js/mermaid-cli@11.17.0",
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(svg, encoding="utf-8")
+    OUTPUT.write_bytes(svg.encode("utf-8"))
     OUTPUT.with_suffix(".json").write_text(
         json.dumps(metadata, indent=2) + "\n", encoding="utf-8"
     )
