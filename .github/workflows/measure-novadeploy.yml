@@ -1,0 +1,221 @@
+name: Measure NovaDeploy diagram performance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - .github/workflows/measure-novadeploy.yml
+      - scripts/render_diagram.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PUPPETEER_SKIP_DOWNLOAD: 'true'
+
+jobs:
+  measure:
+    name: Compare browser-rendered and pre-rendered diagrams
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev fonts-roboto
+          pip install -r requirements.txt beautifulsoup4
+          npm install -g @mermaid-js/mermaid-cli@11.17.0 @lhci/cli@0.15.1
+          python - <<'PY'
+          import json
+          import shutil
+          from pathlib import Path
+          chrome = shutil.which('google-chrome')
+          if not chrome:
+              raise SystemExit('google-chrome is required for the controlled comparison')
+          Path('/tmp/puppeteer.json').write_text(json.dumps({
+              'executablePath': chrome,
+              'args': ['--no-sandbox'],
+          }))
+          PY
+
+      - name: Build baseline with browser-rendered diagrams
+        run: mkdocs build --strict --site-dir site-baseline
+
+      - name: Generate diagram and prepare comparison
+        run: |
+          python scripts/render_diagram.py --puppeteer-config /tmp/puppeteer.json
+          python - <<'PY'
+          import base64
+          import json
+          import shutil
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+
+          diagram = Path('docs/assets/diagrams/novadeploy-architecture.svg')
+          metadata = diagram.with_suffix('.json')
+          svg = diagram.read_text()
+          shutil.copytree('site-baseline', 'site-candidate')
+          pages = [
+              'novadeploy-gitops-admin-guide-portfolio-cut',
+              'novadeploy-gitops-admin-guide-full-version',
+          ]
+          for page in pages:
+              target = Path('site-candidate/writing-samples') / page / 'index.html'
+              html = target.read_text()
+              soup = BeautifulSoup(html, 'html.parser')
+              blocks = soup.select('div.mermaid, pre.mermaid')
+              if len(blocks) != 1:
+                  raise SystemExit(f'{target}: expected exactly one Mermaid block; got {len(blocks)}')
+              block = str(blocks[0])
+              # Find the original element without reserializing the surrounding page.
+              # BeautifulSoup identifies it; the source boundaries preserve all other HTML.
+              import re
+              source_blocks = list(re.finditer(
+                  r'<(div|pre)\b[^>]*\bclass=[\"\'][^\"\']*\bmermaid\b[^\"\']*[\"\'][^>]*>.*?</\1>',
+                  html, re.DOTALL,
+              ))
+              if len(source_blocks) != 1:
+                  raise SystemExit(f'{target}: unable to isolate the original Mermaid element')
+              match = source_blocks[0]
+              replacement = '<div class="prerendered-diagram">\n' + svg.strip() + '\n</div>'
+              target.write_text(html[:match.start()] + replacement + html[match.end():])
+              if BeautifulSoup(target.read_text(), 'html.parser').select('.mermaid'):
+                  raise SystemExit(f'{target}: Mermaid initialization trigger remains')
+              print(f'Prepared {page}: replaced one Mermaid block with inline SVG')
+
+          Path('/tmp/results').mkdir(exist_ok=True)
+          for label, port in [('baseline', 8000), ('candidate', 8001)]:
+              config = {'ci': {'collect': {
+                  'url': [f'http://localhost:{port}/writing-samples/{page}/' for page in pages],
+                  'numberOfRuns': 3,
+                  'settings': {
+                      'chromeFlags': '--no-sandbox',
+                      'blockedUrlPatterns': ['*googletagmanager.com*', '*google-analytics.com*'],
+                  },
+              }}}
+              Path(f'/tmp/lhci-{label}.json').write_text(json.dumps(config))
+
+          for path, marker in [(diagram, 'NOVA_SVG'), (metadata, 'NOVA_META')]:
+              payload = base64.b64encode(path.read_bytes()).decode('ascii')
+              print(f'{marker}_BEGIN')
+              for offset in range(0, len(payload), 120):
+                  print(payload[offset:offset + 120])
+              print(f'{marker}_END')
+          PY
+
+      - name: Measure both versions three times per page
+        run: |
+          python -u -m http.server 8000 --directory site-baseline > /tmp/baseline-server.log 2>&1 &
+          BASELINE_SERVER_PID=$!
+          python -u -m http.server 8001 --directory site-candidate > /tmp/candidate-server.log 2>&1 &
+          CANDIDATE_SERVER_PID=$!
+          trap 'kill "$BASELINE_SERVER_PID" "$CANDIDATE_SERVER_PID"' EXIT
+          python - <<'PY'
+          import time
+          import urllib.request
+          for port in [8000, 8001]:
+              for attempt in range(50):
+                  try:
+                      with urllib.request.urlopen(f'http://localhost:{port}/', timeout=1) as response:
+                          if response.status == 200:
+                              break
+                  except OSError:
+                      pass
+                  time.sleep(0.1)
+              else:
+                  raise SystemExit(f'Server on port {port} did not start')
+          PY
+          for LABEL in baseline candidate; do
+            rm -rf .lighthouseci
+            lhci collect --config="/tmp/lhci-$LABEL.json"
+            mv .lighthouseci "/tmp/results/$LABEL"
+          done
+
+      - name: Summarize measured results
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import statistics
+          from collections import defaultdict
+          from pathlib import Path
+          from urllib.parse import urlparse
+
+          groups = defaultdict(list)
+          fields = {
+              'fcp_ms': 'first-contentful-paint',
+              'lcp_ms': 'largest-contentful-paint',
+              'tbt_ms': 'total-blocking-time',
+              'cls': 'cumulative-layout-shift',
+              'speed_index_ms': 'speed-index',
+              'total_bytes': 'total-byte-weight',
+              'main_thread_ms': 'mainthread-work-breakdown',
+              'script_bootup_ms': 'bootup-time',
+          }
+          for label in ['baseline', 'candidate']:
+              for path in sorted(Path(f'/tmp/results/{label}').glob('*.json')):
+                  report = json.loads(path.read_text())
+                  if not isinstance(report, dict) or 'categories' not in report:
+                      continue
+                  if report.get('runtimeError'):
+                      raise SystemExit(f'{path}: {report["runtimeError"]}')
+                  audits = report['audits']
+                  row = {'performance': round(100 * report['categories']['performance']['score'], 2)}
+                  for key, audit in fields.items():
+                      row[key] = audits.get(audit, {}).get('numericValue')
+                  requests = audits.get('network-requests', {}).get('details', {}).get('items', [])
+                  row['request_count'] = len(requests)
+                  row['script_transfer_bytes'] = sum(
+                      item.get('transferSize', 0) for item in requests if item.get('resourceType') == 'Script'
+                  )
+                  row['mermaid_requests'] = [
+                      {'url': item['url'], 'bytes': item.get('transferSize', 0)}
+                      for item in requests if 'mermaid' in item.get('url', '').lower()
+                  ]
+                  row['warnings'] = report.get('runWarnings', [])
+                  page = urlparse(report['finalUrl']).path
+                  groups[(label, page)].append(row)
+
+          summary = []
+          for (label, page), rows in sorted(groups.items()):
+              medians = {
+                  key: round(statistics.median(row[key] for row in rows if row.get(key) is not None), 3)
+                  for key in ['performance', *fields, 'request_count', 'script_transfer_bytes']
+                  if any(row.get(key) is not None for row in rows)
+              }
+              record = {'version': label, 'page': page, 'runs': len(rows), 'medians': medians, 'individual_runs': rows}
+              summary.append(record)
+              print(json.dumps(record, indent=2))
+          Path('/tmp/results').mkdir(exist_ok=True)
+          Path('/tmp/results/summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+          if len(summary) != 4 or any(item['runs'] != 3 for item in summary):
+              raise SystemExit('Expected three successful runs for each of the four page/version combinations')
+          PY
+
+      - name: Upload comparison reports and generated diagram
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: novadeploy-performance-comparison
+          path: |
+            /tmp/results
+            docs/assets/diagrams/novadeploy-architecture.svg
+            docs/assets/diagrams/novadeploy-architecture.json
+          include-hidden-files: true
+          if-no-files-found: warn
