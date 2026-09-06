@@ -44,9 +44,15 @@ def main() -> None:
     mmdc = shutil.which("mmdc")
     if mmdc and subprocess.check_output([mmdc, "--version"], text=True).strip() != "11.17.0":
         mmdc = None
-    command = [mmdc] if mmdc else [
-        "npx", "--yes", "--package", "@mermaid-js/mermaid-cli@11.17.0", "mmdc"
-    ]
+    if mmdc:
+        command = [mmdc]
+    else:
+        npx = shutil.which("npx")
+        if not npx:
+            raise SystemExit("Install Node.js to regenerate the NovaDeploy diagram.")
+        command = [
+            npx, "--yes", "--package", "@mermaid-js/mermaid-cli@11.17.0", "mmdc"
+        ]
     with tempfile.TemporaryDirectory(prefix="novadeploy-diagram-") as temporary:
         source = Path(temporary) / "architecture.mmd"
         rendered = Path(temporary) / "architecture.svg"
