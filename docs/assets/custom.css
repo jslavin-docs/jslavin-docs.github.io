@@ -417,8 +417,8 @@
   text-decoration: none;
 }
 
-.portfolio-card .card-link + .card-link {
-  margin-left: 2rem;
+.portfolio-card .card-link:not(:last-child) {
+  margin-right: 2rem;
 }
 
 /* Resume-only spacing. Add { .resume-page-title } to the first H1 in docs/resume.md. */
