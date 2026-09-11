@@ -483,3 +483,5 @@
 .md-typeset h1 { margin-bottom: 0.65rem; }
 .md-typeset h1 + p { margin-top: 0.35rem; }
 @media screen { .md-typeset .headerlink { display: inline; } }
+
+.md-source__facts { display: none; }
