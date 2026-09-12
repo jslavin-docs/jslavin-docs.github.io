@@ -485,3 +485,4 @@
 @media screen { .md-typeset .headerlink { display: inline; } }
 
 .md-source__facts { display: none; }
+@media screen and (min-width: 60em) { .md-typeset .page-contents { display: none; } }
