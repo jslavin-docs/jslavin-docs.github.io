@@ -241,3 +241,38 @@ def on_post_build(config) -> None:
     (site_dir / "llms-full.txt").write_text(
         "\n".join(sections), encoding="utf-8"
     )
+
+def on_page_content(html, page, config, files):
+    """Fail the build if a page's Contents box is missing or its links drift.
+
+    Only pages whose Markdown mentions page-contents are checked. The box
+    must render as its own details block (not inside another block) and
+    link to every level-2 heading below it, in order, by its real id.
+    """
+    if "page-contents" not in page.markdown:
+        return html
+
+    soup = BeautifulSoup(html, "html.parser")
+    box = soup.find("details", class_="page-contents")
+    if (
+        box is None
+        or box.find_parent("details") is not None
+        or box.find_parent(class_="admonition") is not None
+    ):
+        raise PluginError(
+            f"{page.file.src_uri}: the Contents box did not render as its own "
+            "block. The ??? line must start at the left margin and every link "
+            "line under it must be indented by exactly four spaces."
+        )
+
+    links = [a.get("href") for a in box.find_all("a")]
+    headings = [
+        "#" + h["id"] for h in box.find_all_next("h2") if h.has_attr("id")
+    ]
+    if links != headings:
+        raise PluginError(
+            f"{page.file.src_uri}: the Contents box links do not match the "
+            f"page's section headings in order.\n  box:      {links}\n"
+            f"  headings: {headings}"
+        )
+    return html
