@@ -22,6 +22,18 @@ This writing sample is the full fictional operator runbook for deploying service
 
     **Audience:** Platform engineers, DevOps/SRE operators, cloud engineers, and technical documentation reviewers who need prescriptive production guidance for GitOps-managed Kubernetes services.
 
+??? abstract page-contents "Contents"
+    - [1. Quick Start and Stop Conditions](#1-quick-start-and-stop-conditions)
+    - [2. Deployment Guardrails](#2-deployment-guardrails)
+    - [3. Architecture Overview](#3-architecture-overview)
+    - [4. Prerequisites and Tooling](#4-prerequisites-and-tooling)
+    - [5. IAM, KMS, SecretStore, and ESO Setup](#5-iam-kms-secretstore-and-eso-setup)
+    - [6. GitOps Repository Layout](#6-gitops-repository-layout)
+    - [7. Argo CD Application and Sync Policy](#7-argo-cd-application-and-sync-policy)
+    - [8. Deployment Verification](#8-deployment-verification)
+    - [9. Rollback and Recovery](#9-rollback-and-recovery)
+    - [10. Appendices](#10-appendices)
+
 ## 1. Quick Start and Stop Conditions
 
 Use this path for standard, non-emergency production deployments. It gives operators one visible workflow before the guide expands into implementation detail.
