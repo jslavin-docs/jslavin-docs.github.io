@@ -17,6 +17,16 @@ Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 
     **Audience:** Platform engineers, DevOps/SRE practitioners, engineering managers, and technical writing reviewers.
 
+??? abstract page-contents "Contents"
+    - [1. At-a-Glance Deployment Path](#1-at-a-glance-deployment-path)
+    - [2. Decision Walkthrough: API Gateway Secret Refresh](#2-decision-walkthrough-api-gateway-secret-refresh)
+    - [3. Core Guardrails](#3-core-guardrails)
+    - [4. Architecture Overview](#4-architecture-overview)
+    - [5. Repository and Sync Policy](#5-repository-and-sync-policy)
+    - [6. Verification Pattern](#6-verification-pattern)
+    - [7. Implementation Excerpt: CI Reloader Guardrail](#7-implementation-excerpt-ci-reloader-guardrail)
+    - [8. Rollback Matrix](#8-rollback-matrix)
+
 ## 1. At-a-Glance Deployment Path
 
 !!! success "Happy Path"
