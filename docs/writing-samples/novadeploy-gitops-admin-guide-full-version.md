@@ -649,7 +649,7 @@ spec:
   containers:
     - name: secret-mount-check
       image: busybox:1.36
-      command: ["sh", "-ec", "test -s /mnt/secrets/DATABASE_PASSWORD && echo secret-mounted"]
+      command: ["sh", "-ec", "test -s /mnt/secrets/DATABASE_PASSWORD && test -r /mnt/secrets/DATABASE_PASSWORD && echo secret-mounted"]
       securityContext:
         allowPrivilegeEscalation: false
         capabilities:
@@ -686,7 +686,7 @@ kubectl delete pod secret-mount-check -n <namespace> --ignore-not-found
 | `fsGroup: 1000` with `defaultMode: 0440` | Makes the check self-contained. Kubernetes sets group ownership of the mounted Secret to the `fsGroup`, so the non-root UID can read it regardless of cluster defaults. |
 
 !!! warning "Mount mode and UID are coupled"
-    The default Secret mode of 0644 is world-readable, so the check passes under any UID. If the chart or a policy tightens the mode to 0400, a non-root container cannot read the file and `test -s` fails, which reads as a failed mount rather than a permissions problem. Set `defaultMode` and `fsGroup` explicitly, as above, so the result reflects the mount and nothing else.
+    The default Secret mode of 0644 is world-readable, so the check passes under any UID. If the chart or a policy tightens the mode to 0400 and the pod sets no `fsGroup`, a non-root container cannot read the file: `test -s` still passes, because it only checks that the file exists and is not empty, but `test -r` fails, which reads as a failed mount rather than a permissions problem. Set `defaultMode` and `fsGroup` explicitly, as above, so the result reflects the mount and nothing else.
 
 !!! note "kubectl compatibility"
     `--for=jsonpath` requires kubectl 1.23 or later. The pod exits as soon as the check completes, so `--for=condition=Ready` is a race and may time out against a pod that already succeeded. On older clients, poll instead: `kubectl get pod secret-mount-check -n <namespace> -o jsonpath='{.status.phase}'`.
@@ -835,7 +835,7 @@ import sys
 import yaml
 
 WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet"}
-SECRET_KEYS = {"secretKeyRef", "secretRef", "secretName"}
+SECRET_KEYS = {"secretKeyRef", "secretRef", "secretName", "secret"}  # "secret": projected volume sources
 
 
 def uses_secret(node):
