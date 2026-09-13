@@ -56,6 +56,8 @@ jslavin-docs.github.io/
 
 ## Run locally
 
+**Prerequisite:** Python must be installed on your computer. Python 3.12 is recommended to match this repository's automated build environment.
+
 Clone the repository:
 
 ```bash
