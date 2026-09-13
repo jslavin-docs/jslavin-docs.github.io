@@ -249,7 +249,7 @@ python3 - "$rendered" <<'PY'
 import sys, yaml
 
 WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet"}
-SECRET_KEYS = {"secretKeyRef", "secretRef", "secretName"}
+SECRET_KEYS = {"secretKeyRef", "secretRef", "secretName", "secret"}  # "secret": projected volume sources
 
 def uses_secret(node):
     if isinstance(node, dict):
