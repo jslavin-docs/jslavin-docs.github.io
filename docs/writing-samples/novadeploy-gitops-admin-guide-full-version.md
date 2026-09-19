@@ -47,7 +47,7 @@ Follow this workflow for standard, non-emergency production deployments. Later s
 | 5 | Sync and verify | Wait for automated sync or run argocd app sync `<app-name>`; then run health, smoke, and secret-mount checks. | Do not use --force for normal deployment hotfixes. |
 | 6 | Close or recover | Close the ticket only after Synced/Healthy, smoke-test success, and non-secret evidence is recorded. | Use Git revert by default; use Argo CD history only for approved service-level agreement (SLA) emergencies. |
 
-!!! info "Zero-Trust Definition"
+!!! info "Secret Handling Rule"
     No plaintext secrets in Git, ConfigMaps, literal environment variables, Terraform state, PRs, logs, chats, or tickets. Secret values live in AWS Secrets Manager. ESO syncs values into Kubernetes Secret objects. Reloader propagates changes by controlled rolling restart, not by exposing secret values.
 
 ## 2. Deployment Guardrails
@@ -907,7 +907,7 @@ With the temporary file and `set -euo pipefail`, a failed `helm template` stops 
 | `<cluster-name>` | EKS cluster name | `nova-prod` |
 | `<app-name>` | Argo CD Application name | `api-gateway` |
 | `<project>` | Argo CD AppProject name | `novadeploy-production` |
-| `<bad-sha>` | Git commit SHA being reverted | `9f28b6c` |
+| `<bad-sha>` | Git commit SHA being reverted | `3d1a7f0` |
 | `<revision-number>` | Argo CD history revision number | `42` |
 | `<root-app-name>` | App-of-Apps root Application name | `novadeploy-production-root` |
 | `<secret_name>` | Service-scoped Secrets Manager secret suffix | `db` |
