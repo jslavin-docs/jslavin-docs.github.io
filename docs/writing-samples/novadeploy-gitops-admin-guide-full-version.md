@@ -80,11 +80,13 @@ Enable production rotation only after each item passes in staging and the produc
 
 - Confirm the Argo CD Application ignores Reloader last-reloaded annotations and sets RespectIgnoreDifferences=true.
 
+- Run the secret mount check in Section 8.2.
+
 
 
 ## 3. Architecture Overview
 
-Git defines the desired cluster state; Terraform defines cloud control-plane resources; AWS Secrets Manager stores secret values; ESO syncs them into Kubernetes Secret objects. Reloader detects Secret changes and patches workload Pod template metadata through the Kubernetes API server, triggering a rolling restart by the workload controller.
+Git defines the desired cluster state; Terraform defines cloud control-plane resources; AWS Secrets Manager stores secret values; ESO syncs them into Kubernetes Secret objects.
 
 ```mermaid
 %%{init: {"theme": "base", "flowchart": {"htmlLabels": true, "nodeSpacing": 115, "rankSpacing": 85, "curve": "basis"}, "themeVariables": {"fontFamily": "Roboto, Arial, sans-serif", "fontSize": "16px", "primaryTextColor": "#111827", "secondaryTextColor": "#111827", "tertiaryTextColor": "#111827", "lineColor": "#374151", "edgeLabelBackground": "#ecfdf5"}}}%%

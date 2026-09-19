@@ -7,6 +7,8 @@ description: "Concise portfolio cut of a fictional NovaDeploy GitOps administrat
 *Deploying Services to Amazon EKS with Argo CD*  
 Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 
+This is the short version of a runbook: the steps an operator follows to release a change to a live service, refresh the passwords it depends on without exposing them, and undo the release if it fails.
+
 [Read the full runbook.](novadeploy-gitops-admin-guide-full-version.md)
 
 !!! note "Portfolio Notice"
@@ -43,9 +45,6 @@ Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 | 4 | Merge to main and sync. | argocd app get shows Synced / Healthy |
 | 5 | Verify release and secrets without exposing values. | rollout status, ExternalSecret Ready=True, key names present, secret-mounted |
 | 6 | Close or roll back. | Closed ticket with final health evidence, or revert PR, approval, and health evidence after rollback |
-
-!!! note "Rollback Policy"
-    Use a Git revert by default. Use Argo CD history rollback only for an approved emergency threatening the service-level agreement (SLA), then follow it with the matching Git revert.
 
 ---
 
@@ -84,7 +83,7 @@ Apply these controls during deployment, verification, and recovery. The full run
 
 ## 4. Architecture Overview
 
-Git defines the intended cluster configuration; Terraform defines cloud control-plane resources. AWS Secrets Manager stores secret values, and ESO syncs them into Kubernetes Secrets. Reloader detects Secret changes and patches workload Pod template metadata through the Kubernetes API server, triggering a rolling restart by the workload controller.
+Git defines the intended cluster configuration; Terraform defines cloud control-plane resources.
 
 ```mermaid
 %%{init: {"theme": "base", "flowchart": {"htmlLabels": true, "nodeSpacing": 115, "rankSpacing": 85, "curve": "basis"}, "themeVariables": {"fontFamily": "Roboto, Arial, sans-serif", "fontSize": "16px", "primaryTextColor": "#111827", "secondaryTextColor": "#111827", "tertiaryTextColor": "#111827", "lineColor": "#374151", "edgeLabelBackground": "#ecfdf5"}}}%%
@@ -158,14 +157,14 @@ nova-gitops/
   .github/workflows/             # lint, render, kubeconform, secret scan, guardrails
 ```
 
-Argo CD watches protected `main`. Automatic pruning deletes resources removed from Git; self-healing corrects differences from Git. Enable these features only for service Applications in the restricted `novadeploy-production` AppProject, subject to production sync windows. The AppProject must restrict access to trusted Git repositories, approved destination clusters and namespaces, and allowed resource kinds. Sync windows must block routine syncs outside approved times unless an incident-approved manual-sync override is enabled.
+Argo CD watches protected `main`. Automatic pruning deletes resources removed from Git; self-healing corrects differences from Git. Sync windows must block routine syncs outside approved times unless an incident-approved manual-sync override is enabled.
 
 Deleting a resource from Git requires a PR showing the removal, passing CI, platform approval, and a merge through protected `main` before Argo CD can prune it. The cluster baseline pre-creates production namespaces; service Applications do not rely on `CreateNamespace=true`.
 
 !!! warning "Auto-Prune Boundary"
     Enable `prune: true` only within the production AppProject and sync windows. Without these controls, a bad merge, wrong path, or unauthorized destination can trigger automatic deletion.
 
-Set both `ignoreDifferences` and `RespectIgnoreDifferences=true` so Argo CD ignores the Reloader-managed field during comparison and sync. This `Application.spec` excerpt assumes the AppProject and sync-window controls are already enforced in `clusters/production/`.
+Set both `ignoreDifferences` and `RespectIgnoreDifferences=true` so Argo CD ignores the Reloader-managed field during comparison and sync.
 
 ```yaml
 # Excerpt from Application.spec.
@@ -190,7 +189,7 @@ ignoreDifferences:
 
 syncPolicy:
   automated:
-    prune: true      # Allowed only inside the restricted AppProject + sync windows.
+    prune: true
     selfHeal: true   # Reverts manual drift back to reviewed Git state.
   syncOptions:
     - ServerSideApply=true
@@ -279,7 +278,7 @@ if missing:
 PY
 ```
 
-Use the Argo CD Application name as the Helm release name, unless `source.helm.releaseName` overrides it. Match `--namespace` to `spec.destination.namespace`. The check fails if a rendered Deployment, StatefulSet, or DaemonSet references a secret but lacks `reloader.stakater.com/auto: "true"` on root workload metadata. It checks the restart requirement, not the full secret lifecycle.
+Use the Argo CD Application name as the Helm release name, unless `source.helm.releaseName` overrides it. Match `--namespace` to `spec.destination.namespace`. The script checks the restart requirement, not the full secret lifecycle.
 
 ---
 
@@ -292,7 +291,7 @@ Use the Argo CD Application name as the Helm release name, unless `source.helm.r
 | --- | --- | --- |
 | Bad image tag promoted | Git revert | Revert the image-bump commit, pass CI, merge, then sync or wait for automation. |
 | Wrong Helm values or Application manifest | Git revert | Revert the change in Git so it remains authoritative. |
-| Application unreachable and SLA at risk | Argo CD history rollback | Use only if Argo CD and the Kubernetes API are reachable and Git revert cannot meet the SLA. Follow the break-glass sequence below. |
+| Application unreachable and service-level agreement (SLA) at risk | Argo CD history rollback | Use only if Argo CD and the Kubernetes API are reachable and Git revert cannot meet the SLA. Follow the break-glass sequence below. |
 | GitHub or CI outage blocks revert | Argo CD history rollback | Roll back to the last-good revision while Git or CI is unavailable, and record non-secret evidence. Follow the break-glass sequence below. |
 | Secret value misconfiguration | Secrets Manager rollback + ESO re-sync | Roll back through the approved secret process. Use Git revert only for SecretStore, ExternalSecret, IAM, KMS, or rotation-config changes. |
 | Cluster unreachable | Infrastructure troubleshooting | Do not use Argo CD. Troubleshoot EKS control plane, networking, IAM, and node health first. |
