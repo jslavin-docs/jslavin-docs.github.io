@@ -41,7 +41,7 @@ Follow this workflow for standard, non-emergency production deployments. Later s
 | Step | Action | What to Do | Stop Condition |
 | --- | --- | --- | --- |
 | 1 | Validate readiness | Run controller health checks, local tool checks, and the guardrail table before editing the deployment pull request (PR). | Stop if Argo CD, ESO, or Reloader is unhealthy. |
-| 2 | Change declared state | Update Helm values, Argo CD Application resources, ExternalSecret CRs, or Terraform-owned IAM/KMS metadata. | Do not commit, paste, or type plaintext secrets into Git, a PR, or a shell. |
+| 2 | Change declared state | Update Helm values, Argo CD Application resources, ExternalSecret custom resources (CRs), or Terraform-owned IAM/KMS metadata. | Do not commit, paste, or type plaintext secrets into Git, a PR, or a shell. |
 | 3 | Open PR | Pass CI (the automated checks): lint, helm template, kubeconform, secret scan, and Reloader annotation guardrail. | Stop if any workload consumes a Secret without the root Reloader annotation. |
 | 4 | Merge to main | Merge after approval. Argo CD watches main and reconciles the application. | No direct pushes and no direct kubectl edits. |
 | 5 | Sync and verify | Wait for automated sync or run argocd app sync `<app-name>`; then run health, smoke, and secret-mount checks. | Do not use --force for normal deployment hotfixes. |
@@ -155,12 +155,12 @@ The platform team pins exact versions in the infrastructure repository. Check co
 | Helm | 3.x; platform-pinned | Chart rendering during local validation and CI |
 | Argo CD CLI | Compatible with server | Application status, sync, wait, history, rollback |
 | Terraform | Version pinned by infra repo | IAM, KMS, Secrets Manager metadata, rotation config |
-| External Secrets Operator | Platform-pinned; CRDs installed | Syncs AWS Secrets Manager values to Kubernetes Secret objects |
+| External Secrets Operator | Platform-pinned; custom resource definitions (CRDs) installed | Syncs AWS Secrets Manager values to Kubernetes Secret objects |
 | ESO controller RBAC | `create` on `serviceaccounts/token` for ServiceAccounts referenced by `auth.jwt.serviceAccountRef` | Allows ESO to request short-lived projected tokens through the Kubernetes TokenRequest API |
 | Reloader | Platform-pinned; reload strategy = annotations | Triggers rolling restarts when watched Secrets/ConfigMaps change |
 | Python + PyYAML | Python 3.x and PyYAML | Fast CI guardrail for rendered workload annotations |
 | jq | 1.6 or later | Safe JSON construction during approved secret seeding |
-| Approved password manager or privileged access management (PAM) CLI | Platform-approved client, authenticated with MFA | Supplies the initial secret value to the seeding workflow without exposing it to a shell |
+| Approved password manager or privileged access management (PAM) CLI | Platform-approved client, authenticated with multi-factor authentication (MFA) | Supplies the initial secret value to the seeding workflow without exposing it to a shell |
 
 ### 4.1 Local Tool Validation
 
@@ -297,7 +297,7 @@ The strategy check normalizes the `jsonpath` array for `args` to match both `--r
 
 ### 5.2 Terraform Pattern
 
-Confirm the EKS OIDC issuer before provisioning IRSA. This check is read-only; create IAM resources through Terraform.
+Confirm the EKS OpenID Connect (OIDC) issuer before provisioning IRSA. This check is read-only; create IAM resources through Terraform.
 
 ```bash
 aws eks describe-cluster \
@@ -341,7 +341,7 @@ resource "aws_iam_role" "eso_read" {
 }
 ```
 
-Attach the secret-read policy only to `nova-<service>-eso-read`, never to the workload role. Pass the ARN of the KMS key that encrypts the service secret through the typed `secrets_kms_key_arn` input.
+Attach the secret-read policy only to `nova-<service>-eso-read`, never to the workload role. Pass the Amazon Resource Name (ARN) of the KMS key that encrypts the service secret through the typed `secrets_kms_key_arn` input.
 
 ```hcl
 variable "secrets_kms_key_arn" {
