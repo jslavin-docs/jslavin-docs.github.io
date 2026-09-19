@@ -13,7 +13,7 @@ Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
     NovaDeploy is a fictional platform created for portfolio purposes. This sample contains no proprietary employer, client, or production information.
 
 !!! info "Scope and Audience"
-    **Scope:** Condensed operator guidance for deploying and refreshing secrets for a fictional production service on Amazon EKS with Argo CD, Terraform, External Secrets Operator, and Reloader.
+    **Scope:** Deploy a fictional production service and refresh its secrets (such as passwords) on Amazon Elastic Kubernetes Service (EKS) using Argo CD, Terraform, AWS Identity and Access Management (IAM), AWS Key Management Service (KMS), External Secrets Operator (ESO), and Reloader.
 
     **Audience:** Platform engineers, DevOps/SRE practitioners, engineering managers, and technical writing reviewers.
 
@@ -29,62 +29,62 @@ Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 
 ## 1. At-a-Glance Deployment Path
 
-!!! success "Happy Path"
-    Standard path: validate controllers and local tooling -&gt; update GitOps repo and Terraform-managed IAM/KMS metadata -&gt; open PR -&gt; pass CI and platform review -&gt; merge to protected main -&gt; sync or wait for Argo CD automation -&gt; verify health, secrets, and rollout state -&gt; roll back if needed.
+!!! success "Standard Deployment Path"
+    Check tools and controllers -&gt; update Git and Terraform-managed IAM/KMS metadata -&gt; open a pull request (PR) -&gt; pass CI (the automated checks) and platform review -&gt; merge to protected main -&gt; sync manually or automatically -&gt; verify health, secrets, and rollout -&gt; roll back if needed.
 
 !!! warning "Stop Checkpoints"
-    Stop if controllers are unhealthy, CI fails, any secret-consuming workload lacks the Reloader root annotation, an ExternalSecret is not Ready, Argo CD is not Synced/Healthy, or any check would require printing a secret value.
+    Stop if controllers are unhealthy, CI fails, a workload using secrets lacks the Reloader annotation on root metadata, an ExternalSecret is not Ready, Argo CD is not Synced/Healthy, or a check requires printing a secret value.
 
 | Step | Operator Action | Evidence |
 | --- | --- | --- |
-| 1 | Run local dependency checks and controller health checks. | Tool versions; Argo CD, ESO, and Reloader Running/Ready |
-| 2 | Update declared state in Git and Terraform-managed cloud metadata. | PR diff contains no plaintext secrets |
+| 1 | Check local tools and controller health. | Tool versions; Argo CD, ESO, and Reloader Running/Ready |
+| 2 | Update configuration in Git and Terraform-managed cloud metadata. | PR diff contains no plaintext secrets |
 | 3 | Pass CI and platform review. | lint, helm template, kubeconform, secret scan, Reloader guardrail |
 | 4 | Merge to main and sync. | argocd app get shows Synced / Healthy |
 | 5 | Verify release and secrets without exposing values. | rollout status, ExternalSecret Ready=True, key names present, secret-mounted |
-| 6 | Close or roll back. | Closed deployment ticket with final health evidence, or revert PR, approval, and post-rollback health evidence |
+| 6 | Close or roll back. | Closed ticket with final health evidence, or revert PR, approval, and health evidence after rollback |
 
 !!! note "Rollback Policy"
-    Use a Git revert by default. Use Argo CD history rollback only for an approved SLA emergency, and follow it with the matching Git revert.
+    Use a Git revert by default. Use Argo CD history rollback only for an approved emergency threatening the service-level agreement (SLA), then follow it with the matching Git revert.
 
 ---
 
 ## 2. Decision Walkthrough: API Gateway Secret Refresh
 
-Use this walkthrough to verify a production-style secret refresh without exposing secret values, skipping workload restarts, or breaking GitOps source-of-truth rules.
+This example verifies a secret refresh, including workload restarts, while protecting secret values and keeping Git as the authoritative configuration.
 
 | Stage | Evidence Snapshot | What It Proves |
 | --- | --- | --- |
 | PR opened | `PR #1842` diff includes the chart, production values, ExternalSecret, root Reloader annotation, and `nova/api-gateway/db` reference; secret scan reports no plaintext values. | The change is Git-tracked and safe to inspect. |
 | CI completed | `lint`, `helm template`, `kubeconform`, `secret scan`, and Reloader guardrail pass. | The workload has the required restart control before merge. |
 | Argo CD before sync | `api-gateway` is `Synced / Healthy` at commit `7c4e91a`. | The starting state is stable. |
-| Argo CD after sync | `api-gateway` syncs to `9f28b6c` and returns `Synced / Healthy`. | The merged Git state reconciles successfully. |
+| Argo CD after sync | `api-gateway` syncs to `9f28b6c` and returns `Synced / Healthy`. | The cluster matches the merged Git configuration. |
 | ExternalSecret verified | `Ready=True` and `SecretSynced`. | ESO created or updated the Kubernetes Secret object. |
-| Secret checked safely | Secret object exists; key-name output shows `DATABASE_PASSWORD`. | Operators verify structure without printing or decoding values. |
+| Secret checked safely | Secret object exists; key-name output shows `DATABASE_PASSWORD`. | Expected keys are present without printing or decoding values. |
 | Reloader rollout confirmed | Rollout succeeds; pods are newer than the Secret refresh; last-reloaded annotation is present. | The refresh triggered a controlled rolling restart, not a manual pod delete. |
-| Rollback decision | No rollback: Argo CD is Healthy, ExternalSecret is Ready, mount prints only `secret-mounted`, and smoke tests pass. | Git remains the source of truth. Failed checks would trigger a Git revert; Argo CD history rollback remains break-glass only. |
+| Rollback decision | No rollback: Argo CD is Healthy, ExternalSecret is Ready, mount prints only `secret-mounted`, and smoke tests pass. | Git remains authoritative. Failed checks would trigger a Git revert; Argo CD history rollback is for approved emergencies only. |
 
 ---
 
 ## 3. Core Guardrails
 
-Apply these controls throughout deployment, verification, and recovery. The full runbook expands them with command transcripts, Terraform snippets, and emergency procedures.
+Apply these controls during deployment, verification, and recovery. The full runbook includes commands, Terraform examples, and emergency procedures.
 
 | Control | Rule | Why It Matters |
 | --- | --- | --- |
-| GitOps source of truth | main is protected; every change lands through PR and passing CI. | Argo CD can self-heal drift and preserve an audit trail. |
+| GitOps source of truth | `main` is protected; every change requires a PR and passing CI. | Argo CD can restore the Git configuration and preserve an audit trail. |
 | Terraform source of truth | IAM, KMS, Secrets Manager metadata, rotation config, and Lambda permissions stay in Terraform. | Cloud permissions remain reviewable, reproducible, and importable after break-glass work. |
 | No plaintext secrets | Secret values never enter Git, Terraform state, PRs, CI logs, tickets, or chats. | Reviewers can validate controls without exposing credentials. |
-| IRSA separation | The workload role never reads Secrets Manager; the dedicated ESO reader role is scoped to `nova/<service>/*`. | Application pods do not receive broad secret-read permissions. |
-| Reloader safety | Secret-consuming workloads carry reloader.stakater.com/auto: "true" on root workload metadata. | Secret refreshes result in controlled rolling restarts. |
+| Separate IAM roles for service accounts (IRSA) | The workload role never reads Secrets Manager; the dedicated ESO reader role is limited to `nova/<service>/*`. | Application pods do not receive broad secret-read permissions. |
+| Reloader safety | Workloads using secrets carry `reloader.stakater.com/auto: "true"` on root workload metadata. | Secret refreshes trigger controlled rolling restarts. |
 | Argo CD compatibility | Application defines `ignoreDifferences` for the Reloader annotation and sets `RespectIgnoreDifferences=true`. | Argo CD does not undo Reloader restart patches during sync. |
-| Rotation gate | Keep var.rotation_enabled=false until KMS, Lambda, ESO, Reloader, and mount checks pass. | Rotation is not enabled before workloads can safely consume refreshed secrets. |
+| Rotation gate | Keep `var.rotation_enabled=false` until KMS, Lambda, ESO, Reloader, and mount checks pass. | Enable rotation only when workloads can safely use refreshed secrets. |
 
 ---
 
 ## 4. Architecture Overview
 
-The design separates responsibilities: Git declares cluster state, Terraform declares cloud control-plane resources, AWS Secrets Manager stores values, and ESO syncs Kubernetes Secret objects. Reloader detects Secret changes and patches workload Pod template metadata through the Kubernetes API server so native workload controllers perform the rolling restart.
+Git defines the intended cluster configuration; Terraform defines cloud control-plane resources. AWS Secrets Manager stores secret values, and ESO syncs them into Kubernetes Secrets. Reloader detects Secret changes and patches workload Pod template metadata through the Kubernetes API server, triggering a rolling restart by the workload controller.
 
 ```mermaid
 %%{init: {"theme": "base", "flowchart": {"htmlLabels": true, "nodeSpacing": 115, "rankSpacing": 85, "curve": "basis"}, "themeVariables": {"fontFamily": "Roboto, Arial, sans-serif", "fontSize": "16px", "primaryTextColor": "#111827", "secondaryTextColor": "#111827", "tertiaryTextColor": "#111827", "lineColor": "#374151", "edgeLabelBackground": "#ecfdf5"}}}%%
@@ -136,11 +136,11 @@ flowchart TD
 ```
 
 !!! note "Accessible Diagram Summary"
-    The diagram has three sections: GitOps path, Terraform-owned cloud controls, and runtime secret sync and refresh. GitOps moves a reviewed PR through CI, protected main, Argo CD, and Amazon EKS. Terraform declares IAM, KMS, Secrets Manager metadata, rotation config, and the approved AWS secret path.
+    The diagram shows three flows: GitOps deployment, Terraform cloud controls, and secret refresh. Reviewed changes pass CI, merge to protected main, and reach Amazon EKS through Argo CD. Terraform defines IAM, KMS, Secrets Manager metadata, rotation configuration, and the approved AWS secret path.
 
-    Amazon EKS hosts ESO, Reloader, application pods, and other runtime controllers. AWS Secrets Manager is read only by ESO through the dedicated ESO reader IRSA role, scoped to `nova/<service>/*`; application pods do not receive broad Secrets Manager read access.
+    Amazon EKS runs ESO, Reloader, application pods, and other controllers. Only ESO reads Secrets Manager, using a dedicated IRSA role limited to `nova/<service>/*`. Application pods do not receive broad Secrets Manager read access.
 
-    ESO syncs the approved value into a Kubernetes Secret. Reloader detects the Secret data change and patches workload Pod template metadata so the native workload controller performs the rolling restart.
+    ESO syncs the approved value into a Kubernetes Secret. Reloader detects the change and patches workload Pod template metadata, triggering a rolling restart by the workload controller.
 
 ---
 
@@ -158,14 +158,14 @@ nova-gitops/
   .github/workflows/             # lint, render, kubeconform, secret scan, guardrails
 ```
 
-Argo CD watches protected `main`, but automated prune and self-heal are not standalone production defaults. Enable them only for service Applications bound to the restricted `novadeploy-production` AppProject and production sync windows. The AppProject must limit trusted Git repositories, approved destination clusters and namespaces, and allowed resource kinds. Sync windows must block routine production syncs outside approved change windows unless an incident-approved manual-sync override is enabled.
+Argo CD watches protected `main`. Automatic pruning deletes resources removed from Git; self-healing corrects differences from Git. Enable these features only for service Applications in the restricted `novadeploy-production` AppProject, subject to production sync windows. The AppProject must restrict access to trusted Git repositories, approved destination clusters and namespaces, and allowed resource kinds. Sync windows must block routine syncs outside approved times unless an incident-approved manual-sync override is enabled.
 
-Treat Git deletions as production deletion changes: the PR must show the resource removal, pass CI, receive platform approval, and merge through protected `main` before Argo CD can prune. Production namespaces are pre-created by the cluster baseline; service Applications do not rely on `CreateNamespace=true`.
+Deleting a resource from Git requires a PR showing the removal, passing CI, platform approval, and a merge through protected `main` before Argo CD can prune it. The cluster baseline pre-creates production namespaces; service Applications do not rely on `CreateNamespace=true`.
 
 !!! warning "Auto-Prune Boundary"
-    Do not copy `prune: true` into a production Application unless the Application is constrained by the production AppProject and sync windows. Without those controls, auto-prune can turn a bad merge, path mistake, or unauthorized destination into automated deletion.
+    Enable `prune: true` only within the production AppProject and sync windows. Without these controls, a bad merge, wrong path, or unauthorized destination can trigger automatic deletion.
 
-Configure both `ignoreDifferences` rules and `RespectIgnoreDifferences=true`: the rules tell Argo CD which Reloader-managed field to ignore, and `RespectIgnoreDifferences=true` makes those rules apply during sync. The example below is an excerpt from `Application.spec` and assumes the surrounding AppProject and sync-window controls are already enforced in `clusters/production/`.
+Set both `ignoreDifferences` and `RespectIgnoreDifferences=true` so Argo CD ignores the Reloader-managed field during comparison and sync. This `Application.spec` excerpt assumes the AppProject and sync-window controls are already enforced in `clusters/production/`.
 
 ```yaml
 # Excerpt from Application.spec.
@@ -201,7 +201,7 @@ syncPolicy:
 
 ## 6. Verification Pattern
 
-After every sync, validate health, rollout state, ExternalSecret readiness, Kubernetes Secret existence, expected key names, mount success, and Reloader state. Never decode, print, paste, or ticket secret values.
+After every sync, check health, rollout status, ExternalSecret readiness, Secret existence and key names, mount success, and Reloader state. Never decode, print, paste, or include secret values in tickets.
 
 ```bash
 argocd app get <app-name> --refresh
@@ -229,7 +229,7 @@ kubectl get secret <service>-app-secrets -n <namespace> \
 
 ## 7. Implementation Excerpt: CI Reloader Guardrail
 
-This CI check turns the Reloader annotation requirement into an automated PR failure. The full runbook includes the longer ServiceAccount, SecretStore, IAM, KMS, and rotation examples.
+This CI check fails a PR if a workload using secrets lacks the required Reloader annotation. The full runbook includes ServiceAccount, SecretStore, IAM, KMS, and rotation examples.
 
 ```bash
 set -euo pipefail
@@ -279,25 +279,25 @@ if missing:
 PY
 ```
 
-The positional Helm release name mirrors the Argo CD Application name, and `--namespace` mirrors `spec.destination.namespace`. If the Application sets `source.helm.releaseName`, use that override instead. The guardrail is intentionally narrow: it checks rendered Deployments, StatefulSets, and DaemonSets for secret references and fails the build when root workload metadata lacks `reloader.stakater.com/auto: "true"`. It detects a missing restart control without attempting to validate the full secret lifecycle.
+Use the Argo CD Application name as the Helm release name, unless `source.helm.releaseName` overrides it. Match `--namespace` to `spec.destination.namespace`. The check fails if a rendered Deployment, StatefulSet, or DaemonSet references a secret but lacks `reloader.stakater.com/auto: "true"` on root workload metadata. It checks the restart requirement, not the full secret lifecycle.
 
 ---
 
 ## 8. Rollback Matrix
 
 !!! warning "Rollback Principle"
-    Git revert is the default because it keeps Git as the source of truth and leaves a clean audit trail. Argo CD history rollback is break-glass only and must be followed by a Git revert within 24 hours.
+    Use Git revert by default to keep Git authoritative and preserve an audit trail. Reserve Argo CD history rollback for approved emergencies (break-glass), followed by a Git revert within 24 hours.
 
 | Scenario | Strategy | Operator Note |
 | --- | --- | --- |
 | Bad image tag promoted | Git revert | Revert the image-bump commit, pass CI, merge, then sync or wait for automation. |
-| Wrong Helm values or Application manifest | Git revert | Revert the Git-tracked change so Git remains canonical. |
+| Wrong Helm values or Application manifest | Git revert | Revert the change in Git so it remains authoritative. |
 | Application unreachable and SLA at risk | Argo CD history rollback | Use only if Argo CD and the Kubernetes API are reachable and Git revert cannot meet the SLA. Follow the break-glass sequence below. |
 | GitHub or CI outage blocks revert | Argo CD history rollback | Roll back to the last-good revision while Git or CI is unavailable, and record non-secret evidence. Follow the break-glass sequence below. |
 | Secret value misconfiguration | Secrets Manager rollback + ESO re-sync | Roll back through the approved secret process. Use Git revert only for SecretStore, ExternalSecret, IAM, KMS, or rotation-config changes. |
 | Cluster unreachable | Infrastructure troubleshooting | Do not use Argo CD. Troubleshoot EKS control plane, networking, IAM, and node health first. |
 
-Argo CD history rollback follows a fixed sequence:
+For Argo CD history rollback:
 
 1. Record the root and target Applications' current sync-policy settings in the incident ticket.
 
@@ -305,6 +305,6 @@ Argo CD history rollback follows a fixed sequence:
 
 3. Disable auto-sync on the target Application with `argocd app set <app-name> --sync-policy none`.
 
-4. Roll back to the last-good revision and verify health.
+4. Roll back to the last known good revision and verify health.
 
 5. Keep both suspended until the matching Git revert merges, then restore their prior sync policies.
