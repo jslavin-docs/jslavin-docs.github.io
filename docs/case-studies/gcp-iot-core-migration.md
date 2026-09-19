@@ -6,7 +6,7 @@ description: How the ClearBlade IoT Core quick start was designed to prevent sil
 
 *Lead Technical Writer, ClearBlade (Oct 2022 – Nov 2024)*
 
-When Google shut down Cloud IoT Core, every connected fleet had to move by a hard deadline. I wrote the quick start that became the front door to the replacement, designed so a migration couldn't look finished when it wasn't.
+When Google shut down Cloud IoT Core, every connected fleet had to move by a hard deadline. I wrote the quick start that became the front door to the replacement, designed so the whole path is proven on a sample device before anyone trusts a migration that reports complete.
 
 ## The problem
 
@@ -37,9 +37,9 @@ I authored the step-by-step quick start that is the front door to ClearBlade IoT
 * **Create the registry first** so devices can't migrate into a void
 * **Generate the device keypair in-flow** so you don't assume it exists
 * **Make Pub/Sub wiring explicit** so it isn't inherited invisibly from the old service
-* **End on proof, not config** so the guide is done when you see real device data arrive at the other end, not when a command returns success
+* **End on proof, not config** so the guide is done when you see the sample device's messages arrive in Pub/Sub, not when a command returns success
 
-Each step blocks a specific way a migration could look finished without being finished.
+Each step is aimed at a specific way a migration could look finished without being finished: you set that piece up and see it work on a sample device before the fleet moves.
 
 ## Result
 
