@@ -14,6 +14,10 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
 4. Substitutes the checked-in NovaDeploy SVG when rendering its two
    sample pages, avoiding browser-side Mermaid rendering. The original
    Markdown and its Mermaid source remain intact in the AI exports.
+5. Gives the theme's site-search dialog an accessible name on every
+   page, including the 404 page. The theme marks it role="dialog" but
+   ships it without a name, which fails screen readers and automated
+   accessibility audits.
 
 Both exports are cleaned before they are written: presentation-only
 attribute lists are removed and raw HTML layout blocks are converted
@@ -276,3 +280,34 @@ def on_page_content(html, page, config, files):
             f"  headings: {headings}"
         )
     return html
+
+
+SEARCH_DIALOG = '<div class="md-search" data-md-component="search" role="dialog">'
+SEARCH_DIALOG_NAMED = SEARCH_DIALOG[:-1] + ' aria-label="Search">'
+
+
+def _name_search_dialog(html: str, source: str) -> str:
+    """Add aria-label="Search" to the theme's search dialog.
+
+    The build fails if the dialog markup is not found exactly once, so a
+    theme upgrade that changes it is caught in CI instead of silently
+    shipping an unnamed dialog again.
+    """
+    if html.count(SEARCH_DIALOG) != 1:
+        raise PluginError(
+            f"{source}: expected exactly one unnamed search dialog. The theme "
+            "markup may have changed; update SEARCH_DIALOG in hooks.py."
+        )
+    return html.replace(SEARCH_DIALOG, SEARCH_DIALOG_NAMED)
+
+
+def on_post_page(output, page, config):
+    """Name the search dialog on every rendered page."""
+    return _name_search_dialog(output, page.file.src_uri)
+
+
+def on_post_template(output_content, template_name, config):
+    """Name the search dialog on the 404 page, which is not a page object."""
+    if template_name != "404.html":
+        return output_content
+    return _name_search_dialog(output_content, template_name)
