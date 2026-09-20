@@ -497,3 +497,16 @@
   --md-code-hl-punctuation-color: hsla(0, 0%, 0%, 0.6);
   --md-code-hl-generic-color: hsla(0, 0%, 0%, 0.6);
 }
+
+/* Accessibility: three more theme defaults measure just under the 4.5:1 WCAG AA minimum for small text:
+   the faded top-bar tab links (4.28:1), the search popup's status line (4.41:1), and its highlighted
+   match words (4.25:1, or 3.9:1 inside code). */
+.md-tabs__link {
+  opacity: 0.75; /* theme: 0.7; keeps the faded look */
+}
+.md-search-result__meta {
+  color: hsla(0, 0%, 0%, 0.6); /* status line, e.g. "Type to start searching" */
+}
+.md-search-result mark {
+  color: var(--md-primary-fg-color); /* highlighted match words */
+}
