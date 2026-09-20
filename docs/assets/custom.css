@@ -486,3 +486,14 @@
 
 .md-source__facts { display: none; }
 @media screen and (min-width: 60em) { .md-typeset .page-contents { display: none; } }
+
+/* Accessibility: the theme's "Made with" footer text and its muted code tokens (comments, variables,
+   configuration keys) measure 4.47:1, just under the 4.5:1 WCAG AA minimum for small text. */
+[data-md-color-scheme="default"] {
+  --md-footer-fg-color--lighter: hsla(0, 0%, 100%, 0.5); /* footer "Made with" text */
+  --md-code-hl-comment-color: hsla(0, 0%, 0%, 0.6);      /* code comments */
+  --md-code-hl-variable-color: hsla(0, 0%, 0%, 0.6);     /* variables and configuration keys */
+  --md-code-hl-operator-color: hsla(0, 0%, 0%, 0.6);     /* operators, punctuation, and generic output share the same muted shade */
+  --md-code-hl-punctuation-color: hsla(0, 0%, 0%, 0.6);
+  --md-code-hl-generic-color: hsla(0, 0%, 0%, 0.6);
+}
