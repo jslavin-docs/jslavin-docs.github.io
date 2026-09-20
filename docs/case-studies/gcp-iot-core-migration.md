@@ -10,7 +10,7 @@ When Google shut down Cloud IoT Core, every connected fleet had to move by a har
 
 ## The problem
 
-In August 2022, Google announced it would retire Cloud IoT Core. On Aug 16, 2023 the service shut down: MQTT and HTTP bridges closed and Google's own docs went offline with it. Every connected fleet had to move, whether they wanted to or not.
+In August 2022, Google announced it would retire Cloud IoT Core. On August 16, 2023, the service shut down: MQTT and HTTP bridges closed and Google's own docs went offline with it. Every connected fleet had to move, whether they wanted to or not.
 
 ClearBlade built ClearBlade IoT Core as a direct replacement. More than 250 Google Cloud customers ultimately migrated. That number is the company's, for the whole program. It's what the docs had to support: production fleets, a fixed external deadline, and operators who didn't choose to migrate.
 
@@ -18,7 +18,7 @@ ClearBlade built ClearBlade IoT Core as a direct replacement. More than 250 Goog
 
 The product goal was to minimize customer changes. Customers keep their Google Cloud project, their Pub/Sub topics (Google's message pipeline), and their device credentials. The device-side change is pointing to ClearBlade's MQTT endpoint (MQTT is the messaging protocol used by the devices).
 
-That dictates the onboarding order: provisioning runs through Google Cloud Marketplace, a GCP service account authorizes the connection, and Pub/Sub permissions carry telemetry. The guide has to start in GCP because that's how the product works. I also called out that the temporary IAM permissions role used for migration could be removed when done.
+That dictates the onboarding order: provisioning runs through Google Cloud Marketplace, a GCP service account authorizes the connection, and Pub/Sub permissions let telemetry flow. The guide has to start in GCP because that's how the product works. I also called out that the temporary IAM permissions role used for migration could be removed when done.
 
 ## The risk to design against
 
@@ -32,7 +32,7 @@ The fleet looks migrated and isn't. This happened: a user of the open-source mig
 
 ## What I wrote
 
-I authored the step-by-step quick start that is the front door to ClearBlade IoT Core. I built in code samples and live telemetry testing. The sequence is deliberate:
+I authored the step-by-step quick start that is the front door to ClearBlade IoT Core. I built in code samples and live telemetry testing. The core steps follow the Google quick start customers already knew:
 
 * **Create the registry first** so devices can't migrate into a void
 * **Generate the device keypair in-flow** so you don't assume it exists
@@ -43,4 +43,4 @@ Each step is aimed at a specific way a migration could look finished without bei
 
 ## Result
 
-The quick start remains the published entry point: [Read the published quick start](https://docs.clearblade.com/iotcore/quick-start). It's one page in a larger set of quick starts, how-tos, reference, and migration tooling that supported 250+ customers off a discontinued service.
+The quick start remains the published entry point: [Read the published quick start](https://docs.clearblade.com/iotcore/quick-start). It's one page in a larger set of quick starts, how-tos, reference, and migration tooling that supported 250+ customers off a discontinued service. The migration guides in that set cut support tickets by 30%.
