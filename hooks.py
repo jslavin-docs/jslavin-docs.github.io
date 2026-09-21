@@ -18,6 +18,10 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
    page, including the 404 page. The theme marks it role="dialog" but
    ships it without a name, which fails screen readers and automated
    accessibility audits.
+6. Removes the theme's GitHub statistics lookup from the repository
+   link on every page, including the 404 page. The site does not show
+   star, fork, or release numbers, so the lookup was an unused request
+   to the GitHub API. The "GitHub" link itself is unchanged.
 
 Both exports are cleaned before they are written: presentation-only
 attribute lists are removed and raw HTML layout blocks are converted
@@ -301,13 +305,42 @@ def _name_search_dialog(html: str, source: str) -> str:
     return html.replace(SEARCH_DIALOG, SEARCH_DIALOG_NAMED)
 
 
+SOURCE_COMPONENT = ' data-md-component="source"'
+
+
+def _drop_repo_stats_lookup(html: str, source: str) -> str:
+    """Remove the marker that makes the theme look up GitHub statistics.
+
+    The theme's script requests stars, forks, and the latest release from
+    the GitHub API for every link carrying this marker. This site does not
+    display those numbers, and the repository publishes no releases, so the
+    lookup was an unused request that logged a 404 in the browser console.
+    Removing the marker leaves the "GitHub" link itself unchanged.
+
+    The build fails if the marker is not found, so a theme upgrade that
+    changes it is caught in CI instead of silently restoring the lookup.
+    """
+    if SOURCE_COMPONENT not in html:
+        raise PluginError(
+            f"{source}: expected the theme's repository link marker. The theme "
+            "markup may have changed, or repo_url was removed from mkdocs.yml; "
+            "update SOURCE_COMPONENT in hooks.py."
+        )
+    return html.replace(SOURCE_COMPONENT, "")
+
+
+def _adjust_theme_markup(html: str, source: str) -> str:
+    """Apply both theme markup adjustments to one rendered page."""
+    return _drop_repo_stats_lookup(_name_search_dialog(html, source), source)
+
+
 def on_post_page(output, page, config):
-    """Name the search dialog on every rendered page."""
-    return _name_search_dialog(output, page.file.src_uri)
+    """Adjust the theme markup on every rendered page."""
+    return _adjust_theme_markup(output, page.file.src_uri)
 
 
 def on_post_template(output_content, template_name, config):
-    """Name the search dialog on the 404 page, which is not a page object."""
+    """Adjust the theme markup on the 404 page, which is not a page object."""
     if template_name != "404.html":
         return output_content
-    return _name_search_dialog(output_content, template_name)
+    return _adjust_theme_markup(output_content, template_name)
