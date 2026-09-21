@@ -57,6 +57,13 @@ markdown_extensions:
 plugins:
   - search
   - social
+  # Serve the Roboto font files from this site instead of Google's servers.
+  # The theme's optional Mermaid script stays on unpkg.com: no page loads it
+  # (the diagrams are pre-rendered), so there is no reason to download it on
+  # every build.
+  - privacy:
+      assets_exclude:
+        - unpkg.com/*
 
 hooks:
   - hooks.py
