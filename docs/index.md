@@ -6,7 +6,7 @@ description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, De
 
 <div class="hero-card">
   <div class="hero-photo-wrap">
-    <img class="hero-photo" src="assets/jeff-slavin.jpg" alt="Professional headshot of Jeff Slavin" />
+    <img class="hero-photo" src="assets/jeff-slavin.webp" width="180" height="180" alt="Professional headshot of Jeff Slavin" />
   </div>
   <div class="hero-copy">
     <p class="eyebrow">TECHNICAL WRITER · DOCUMENTATION LEAD</p>
