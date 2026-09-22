@@ -529,8 +529,26 @@
   border-color: var(--md-primary-fg-color);
 }
 
-/* The native checkbox labels now also support keyboard activation. */
-label[data-a11y-toggle]:focus-visible {
+/* Keep the theme's label layout while valid inner controls provide button
+   semantics. Retain the old selector so this CSS can be uploaded first. */
+label[data-a11y-toggle]:focus-visible,
+.md-a11y-control:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
+}
+
+.md-a11y-control {
+  display: block;
+}
+
+.md-nav__link > .md-a11y-control {
+  display: flex;
+  width: 100%;
+  align-items: inherit;
+  justify-content: inherit;
+  gap: inherit;
+}
+
+.md-nav__link:has(> .md-a11y-control:focus) {
+  color: var(--md-primary-fg-color);
 }
