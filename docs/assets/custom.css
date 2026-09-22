@@ -510,3 +510,27 @@
 .md-search-result mark {
   color: var(--md-primary-fg-color); /* highlighted match words */
 }
+
+/* Keep small hover/focus text above 4.5:1. The theme's bright accent is
+   4.26:1 on white; the primary blue is 6.86:1. Cards and hero colors keep
+   their existing rules. Keyboard focus outlines remain visible. */
+.md-typeset a:not(.button):not(.md-button):not(.feature-card):not(.portfolio-card):is(:hover, :focus),
+.md-nav__link[href]:is(:hover, :focus),
+.md-nav__link[for]:is(:hover, :focus),
+.md-nav--primary .md-nav__item--active > .md-nav__link:is(:hover, :focus),
+.md-search-result__more > summary:is(:hover, :focus) > div {
+  color: var(--md-primary-fg-color);
+}
+
+/* These controls use white text on the accent background when focused. */
+.md-typeset .md-button:is(:hover, :focus),
+.md-top:is(:hover, :focus) {
+  background-color: var(--md-primary-fg-color);
+  border-color: var(--md-primary-fg-color);
+}
+
+/* The native checkbox labels now also support keyboard activation. */
+label[data-a11y-toggle]:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
