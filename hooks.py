@@ -357,7 +357,7 @@ def _add_web_accessibility(html: str, source: str, helper_url: str) -> str:
 
     def label(match: re.Match) -> str:
         nonlocal header_controls, search_back_controls
-        opening = match.group(0)
+        opening, contents = match.group(1), match.group(2)
         attrs = BeautifulSoup(opening, "html.parser").label.attrs
         classes = attrs.get("class", [])
         target = attrs.get("for")
@@ -374,17 +374,16 @@ def _add_web_accessibility(html: str, source: str, helper_url: str) -> str:
         elif target == "__toc" and 'id="__toc"' in html:
             # These labels are buttons only in the mobile navigation drawer.
             # The helper leaves the desktop table-of-contents title as text.
-            closing = html.find("</label>", match.end())
-            text = BeautifulSoup(html[match.end():closing], "html.parser").get_text(" ", strip=True)
+            text = BeautifulSoup(contents, "html.parser").get_text(" ", strip=True)
             action = "back to navigation" if "md-nav__title" in classes else "table of contents"
             name = f"{text}: {action}"
         else:
-            return opening
+            return match.group(0)
 
         if "role" in attrs or "tabindex" in attrs:
             raise PluginError(f"{source}: theme toggle already has semantics; review hooks.py.")
         extra = (
-            f' data-a11y-toggle="{target}" data-a11y-name="{escape(name, quote=True)}"'
+            f' class="md-a11y-control" data-a11y-toggle="{target}" data-a11y-name="{escape(name, quote=True)}"'
             f' role="button" aria-label="{escape(name, quote=True)}" tabindex="0"'
         )
         if panel:
@@ -393,9 +392,11 @@ def _add_web_accessibility(html: str, source: str, helper_url: str) -> str:
             extra += ' data-a11y-close-search'
         else:
             extra += ' aria-expanded="false"'
-        return opening[:-1] + extra + ">"
+        # ARIA does not permit role="button" on a label. Keep the theme's
+        # label, attributes and contents intact, and use a permitted host.
+        return opening + "<span" + extra + ">" + contents + "</span></label>"
 
-    html = re.sub(r"<label\b[^>]*>", label, html)
+    html = re.sub(r"(<label\b[^>]*>)(.*?)</label>", label, html, flags=re.DOTALL)
     if header_controls != 2 or search_back_controls != 1:
         raise PluginError(f"{source}: expected two header toggles and one search back control.")
 
@@ -462,15 +463,16 @@ _ACCESSIBILITY_SCRIPT = r"""
   if (!search || !drawer || !panel || !sidebar || !query || !output || !scroll) return;
 
   const controls = [...document.querySelectorAll("[data-a11y-toggle]")];
-  const searchButton = document.querySelector('.md-header__button[data-a11y-toggle="__search"]');
-  const menuButton = document.querySelector('.md-header__button[data-a11y-toggle="__drawer"]');
+  const searchButton = document.querySelector('.md-header__button > [data-a11y-toggle="__search"]');
+  const menuButton = document.querySelector('.md-header__button > [data-a11y-toggle="__drawer"]');
+  const menuLabel = menuButton?.closest("label");
   const desktopSearch = window.matchMedia("(min-width: 60em)");
   const desktopNavigation = window.matchMedia("(min-width: 76.25em)");
   const characterShortcuts = new Set(["f", "s", "/", "p", ",", "n", "."]);
   const focusable = 'a[href],button,input,select,textarea,[tabindex="0"]';
   const toc = document.getElementById("__toc");
   const tocPanel = sidebar.querySelector(".md-nav--primary .md-nav--secondary");
-  const tocTrigger = sidebar.querySelector('.md-nav__link[data-a11y-toggle="__toc"]');
+  const tocTrigger = sidebar.querySelector('.md-nav__link > [data-a11y-toggle="__toc"]');
   const tocBack = tocPanel?.querySelector('[data-a11y-toggle="__toc"]');
   const tocBackground = tocPanel ? [...sidebar.querySelectorAll(focusable)]
     .filter(element => element !== toc && !tocPanel.contains(element))
@@ -552,7 +554,19 @@ _ACCESSIBILITY_SCRIPT = r"""
   });
 
   document.addEventListener("click", event => {
-    const control = event.target instanceof Element ? event.target.closest("[data-a11y-toggle]") : null;
+    const target = event.target instanceof Element ? event.target : null;
+    const innerControl = target?.closest("[data-a11y-toggle]");
+    const label = target?.closest("label");
+    const control = innerControl || label?.querySelector(":scope > [data-a11y-toggle]");
+    if (!control || control.getAttribute("role") !== "button") return;
+    if (innerControl && label) {
+      // A focusable descendant suppresses a label's default activation. Route
+      // its click through the original label once, preserving theme behavior.
+      event.preventDefault();
+      event.stopPropagation();
+      label.click();
+      return;
+    }
     if (control === searchButton) searchOpener = control;
     if (control?.hasAttribute("data-a11y-close-search")) {
       queueMicrotask(() => { if (!search.checked) returnFromSearch(); });
@@ -566,7 +580,7 @@ _ACCESSIBILITY_SCRIPT = r"""
     }
     // The drawer is a disclosure: leaving it closes it without trapping focus.
     if (drawer.checked && !desktopNavigation.matches && !sidebar.contains(event.target) &&
-        !menuButton?.contains(event.target)) close(drawer);
+        !menuLabel?.contains(event.target)) close(drawer);
   });
 
   document.addEventListener("keydown", event => {
