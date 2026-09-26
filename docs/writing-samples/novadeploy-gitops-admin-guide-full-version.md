@@ -1,5 +1,8 @@
 ---
 description: "Full fictional NovaDeploy GitOps administration guide covering Amazon EKS, Argo CD, IAM, KMS, ESO, Reloader, CI guardrails, verification, and rollback workflows."
+social:
+  cards_layout_options:
+    title: "NovaDeploy GitOps Guide: Full Runbook"
 ---
 
 # NovaDeploy Platform: GitOps Administration Guide
