@@ -1,5 +1,8 @@
 ---
 description: How the ClearBlade IoT Core quick start was designed to prevent silent migration failures during Google's shutdown of Cloud IoT Core.
+social:
+  cards_layout_options:
+    title: "Case Study: GCP IoT Core Migration"
 ---
 
 # Case Study: Designing a Quick Start So Migrations Don't Fail Silently
