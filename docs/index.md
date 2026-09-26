@@ -1,5 +1,8 @@
 ---
 description: "Technical writing portfolio for Jeff Slavin, focused on GitOps, DevSecOps, APIs, cloud, edge, IoT, and Docs as Code."
+social:
+  cards_layout_options:
+    title: "Technical Writing Portfolio"
 ---
 
 # Jeff Slavin { .home-page-title }
