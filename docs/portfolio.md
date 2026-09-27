@@ -12,14 +12,14 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="../writing-samples/novadeploy-gitops-admin-guide-portfolio-cut/">
     <span class="card-tag">Amazon EKS · Argo CD · GitOps · DevSecOps</span>
     <h3>NovaDeploy GitOps Administration Guide – Portfolio Cut</h3>
-    <p>A 5–7-minute cut of a fictional operator runbook, covering the deployment path and stop checkpoints, GitOps and Terraform source-of-truth rules, secret handling with no plaintext values in Git, PRs, logs, or tickets, architecture, verification, and rollback decisions. Includes a worked secret-refresh walkthrough and the CI check that enforces the Reloader restart guardrail.</p>
+    <p>A 5–7-minute cut of a fictional operator runbook: deployment steps, stop checkpoints, GitOps and Terraform source-of-truth rules, architecture, verification, rollback, and keeping plaintext secrets out of Git, PRs, logs, and tickets. Includes a worked secret-refresh walkthrough and the CI check that enforces the Reloader restart guardrail.</p>
     <span class="card-link">Read sample →</span>
   </a>
 
   <a class="portfolio-card" href="../writing-samples/novadeploy-gitops-admin-guide-full-version/">
     <span class="card-tag">Amazon EKS · IRSA · KMS · ESO · Reloader</span>
     <h3>NovaDeploy GitOps Administration Guide – Full Runbook</h3>
-    <p>The complete fictional operator runbook: Terraform-managed IAM, KMS, and Secrets Manager patterns, SecretStore and ESO setup, a rotation readiness gate, CI guardrails, verification down to the command level, break-glass rollback, and an evidence checklist. Start with the portfolio cut for a shorter read.</p>
+    <p>The complete fictional operator runbook: Terraform-managed IAM, KMS, and Secrets Manager patterns, SecretStore and ESO setup, a rotation readiness gate, CI guardrails, command-level verification, break-glass rollback, and an evidence checklist. Start with the portfolio cut for a shorter read.</p>
     <span class="card-link">Read sample →</span>
   </a>
 </div>
