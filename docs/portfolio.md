@@ -19,7 +19,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="../writing-samples/novadeploy-gitops-admin-guide-full-version/">
     <span class="card-tag">Amazon EKS · IRSA · KMS · ESO · Reloader</span>
     <h3>NovaDeploy GitOps Administration Guide – Full Runbook</h3>
-    <p>The complete fictional operator runbook: Terraform-managed IAM, KMS, and Secrets Manager patterns, SecretStore and ESO setup, a rotation readiness gate, CI guardrails, command-level verification, break-glass rollback, and an evidence checklist. Start with the portfolio cut for a shorter read.</p>
+    <p>The complete fictional operator runbook: Terraform patterns for IAM, KMS, and Secrets Manager, as well as SecretStore and ESO setup. Includes a rotation readiness gate, CI guardrails, verification commands, break-glass rollback, and an evidence checklist. Start with the portfolio cut for a shorter read.</p>
     <span class="card-link">Read sample →</span>
   </a>
 </div>
