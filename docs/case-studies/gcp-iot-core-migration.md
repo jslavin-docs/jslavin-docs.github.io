@@ -9,13 +9,13 @@ social:
 
 *Lead Technical Writer, ClearBlade (Oct 2022 – Nov 2024)*
 
-When Google shut down Cloud IoT Core, every connected fleet had to move by a hard deadline. I wrote the quick start that became the front door to the replacement, designed so the whole path is proven on a sample device before anyone trusts a migration that reports complete.
+When Google shut down Cloud IoT Core, every connected fleet had to move by a hard deadline. I wrote the quick start that became the front door to the replacement, designed so the whole path is proven on a sample device before anyone trusts a migration reported as complete.
 
 ## The problem
 
 In August 2022, Google announced it would retire Cloud IoT Core. On August 16, 2023, the service shut down: MQTT and HTTP bridges closed and Google's own docs went offline with it. Every connected fleet had to move, whether they wanted to or not.
 
-ClearBlade built ClearBlade IoT Core as a direct replacement. More than 250 Google Cloud customers ultimately migrated. That number is the company's, for the whole program. It's what the docs had to support: production fleets, a fixed external deadline, and operators who didn't choose to migrate.
+ClearBlade built ClearBlade IoT Core as a direct replacement. More than 250 Google Cloud customers ultimately migrated. That number is the company's, for the whole program. It's what the docs had to support: production fleets, a fixed external deadline, and operators forced to migrate.
 
 ## The constraint
 
@@ -23,7 +23,7 @@ The product goal was to minimize customer changes. Customers keep their Google C
 
 That dictates the onboarding order: provisioning runs through Google Cloud Marketplace, a GCP service account authorizes the connection, and Pub/Sub permissions let telemetry flow. The guide has to start in GCP because that's how the product works. I also called out that the temporary IAM permissions role used for migration could be removed when done.
 
-## The risk to design against
+## When migrations only look complete
 
 In a forced migration, the dangerous failure is silent success. A migration tool can report "complete" even when:
 
@@ -46,4 +46,4 @@ Each step is aimed at a specific way a migration could look finished without bei
 
 ## Result
 
-The quick start remains the published entry point: [Read the published quick start](https://docs.clearblade.com/iotcore/quick-start). It's one page in a larger set of quick starts, how-tos, reference, and migration tooling that supported 250+ customers off a discontinued service. The migration guides in that set cut support tickets by 30%.
+The [quick start](https://docs.clearblade.com/iotcore/quick-start) remains the published entry point. It's one page in a larger set of quick starts, how-tos, reference, and migration tooling that supported 250+ customers off a discontinued service. The migration guides in that set cut support tickets by 30%.
