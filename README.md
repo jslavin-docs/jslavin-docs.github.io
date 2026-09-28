@@ -58,6 +58,8 @@ jslavin-docs.github.io/
 
 **Prerequisite:** Python must be installed on your computer. Python 3.12 is recommended to match this repository's automated build environment.
 
+The social plugin, which draws the link-preview images, also needs the Cairo graphics library. On Debian or Ubuntu: `sudo apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev`. On macOS: `brew install cairo freetype libffi libjpeg libpng zlib`. Windows steps are on the [Material for MkDocs image processing page](https://squidfunk.github.io/mkdocs-material/plugins/requirements/image-processing/).
+
 Clone the repository:
 
 ```bash
