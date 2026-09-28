@@ -295,7 +295,7 @@ The strategy check normalizes the `jsonpath` array for `args` to match both `--r
 | Role / Account | Used By | Allowed Access | Explicitly Not Allowed |
 | --- | --- | --- | --- |
 | `nova-<service>-prod` | Workload ServiceAccount `<workload-sa-name>` | Only the non-secret AWS APIs the application needs, such as S3 or DynamoDB | No Secrets Manager read permissions |
-| `nova-<service>-eso-read` | ServiceAccount `<service>-eso-secret-reader` | `secretsmanager:GetSecretValue`, `DescribeSecret`, and `ListSecretVersionIds` for `nova/<service>/*`, plus KMS decrypt through Secrets Manager | No wildcard paths; no trust for other service accounts |
+| `nova-<service>-eso-read` | ServiceAccount `<service>-eso-secret-reader` | `secretsmanager:GetSecretValue`, `DescribeSecret`, and `ListSecretVersionIds` for `nova/<service>/*`, plus KMS decrypt through Secrets Manager | No paths outside `nova/<service>/*`; no trust for other service accounts |
 | rotation Lambda role | Approved Secrets Manager rotation Lambda | Rotation-only actions and KMS use through Secrets Manager when rotation is enabled | Not present in KMS policy while var.rotation_enabled=false |
 
 ### 5.2 Terraform Pattern
@@ -595,7 +595,7 @@ spec:
 | --- | --- | --- |
 | prune: true | Resources removed from Git are removed from the cluster on sync. | Treat deletions as production changes; require review. |
 | selfHeal: true | Manual drift is reverted to Git state. | Do not hotfix production with direct kubectl edits. |
-| ServerSideApply=true | Kubernetes tracks field ownership during apply. | Preferred for shared resources and conflict detection. |
+| ServerSideApply=true | Kubernetes tracks field ownership during apply. | Useful for resources not fully managed by Argo CD. Applies with `--force-conflicts`, so a conflicting field is taken over, not blocked. |
 | RespectIgnoreDifferences=true | Argo CD respects ignoreDifferences during sync. | Prevents sync from removing Reloader last-reloaded annotations. |
 | No CreateNamespace=true | Production namespaces are not created ad hoc by service apps. | Cluster baseline creates namespaces with required policy first. |
 
