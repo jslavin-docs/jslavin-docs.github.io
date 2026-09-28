@@ -251,7 +251,8 @@ RELOADER_SUBJECT="system:serviceaccount:<reloader-namespace>:${RELOADER_SA}"
 require_can_i_as \
   "${ESO_SUBJECT}" \
   "ESO cannot create TokenRequest objects for the referenced ServiceAccount in <namespace>." \
-  create serviceaccounts/token -n <namespace>
+  create serviceaccounts/<service>-eso-secret-reader \
+    --subresource=token -n <namespace>
 
 for verb in get list watch; do
   require_can_i_as \
@@ -468,23 +469,24 @@ Seeding sets the initial secret value and is the only approved human write path 
     **Form B, temporary file with restricted permissions.** Set the umask *before* creating the file; applying `chmod` afterward leaves a window in which it is world-readable.
 
     ```bash
-    umask 077                                   # every file created in this shell is 0600
-    SECURE_DIR="$(mktemp -d)"                   # encrypted local storage, or /dev/shm
-    SECRET_FILE="${SECURE_DIR}/<service>-secret.json"
-
-    <password-manager-cli> read "<pm-item-reference>" \
-      | jq -Rn '{password: input}' > "${SECRET_FILE}"
-
-    ls -l "${SECRET_FILE}"                      # confirm 0600 before continuing
+    umask 077  # remove group/other permissions from new files
+    if SECURE_DIR="$(mktemp -d "<approved-encrypted-directory>/nova-seed.XXXXXX")"; then
+      SECRET_FILE="${SECURE_DIR}/<service>-secret.json"
+      <password-manager-cli> read "<pm-item-reference>" \
+        | jq -Rn '{password: input}' > "${SECRET_FILE}"
+      ls -l "${SECRET_FILE}"  # confirm -rw------- before continuing
+    else
+      echo "Could not create the secure directory. Stop here." >&2
+    fi
     ```
 
     !!! danger "Never place the value in argv"
         Do not use `--secret-string "$(<password-manager-cli> read ...)"` or hand-write the JSON in a heredoc. Command substitution exposes plaintext in process arguments to `ps` and local processes while the command runs. A heredoc requires pasting the value into the terminal, which step 2 forbids.
 
     !!! note "If no password-manager CLI is available"
-        Export the value from the password manager directly to the pre-created 0600 path using the manager's own save-to-file function. Do not route it through the terminal, the clipboard, or an editor buffer.
+        Run Form B's `umask` line and `if` block with `: > "${SECRET_FILE}"` in place of the password-manager pipeline; that creates the empty file, and `ls -l` must show `-rw-------`. Save the value to that path with the password manager's own save-to-file function, then confirm `-rw-------` again. The file must be JSON with a `password` string field, for example `{"password":"<value>"}`, not a raw password or a vendor export. Do not route it through the terminal, the clipboard, or an editor buffer.
 
-    `jq -Rn '{password: input}'` reads one line from stdin and JSON-escapes it. Do not build the JSON by hand: a value containing `"`, `\`, or a newline produces a malformed document or a silently truncated secret.
+    These examples accept single-line passwords only. The command safely escapes quotes and backslashes but reads only the first line. Do not build the JSON by hand. Use an approved multiline-safe workflow for values containing line breaks.
 
 4. Create the first AWSCURRENT version with `put-secret-value` and a file reference. Form A already does this; for Form B, use the file from step 3.
 
@@ -511,7 +513,7 @@ Seeding sets the initial secret value and is the only approved human write path 
     ```
 
     !!! note "shred is not a guarantee"
-        On copy-on-write filesystems and SSDs with wear leveling, `shred` cannot reliably overwrite the original blocks. Prefer Form A, or place `SECURE_DIR` on a memory-backed path such as `/dev/shm` so no block reaches persistent storage.
+        On copy-on-write filesystems and SSDs with wear leveling, `shred` cannot reliably overwrite the original blocks. Prefer Form A. Memory-backed storage such as `/dev/shm` can still write secrets to disk through swap.
 
 7. Record only non-secret evidence in the deployment ticket: secret ARN/name, KMS key ID, AWSCURRENT version ID, seeding path used (workstation, PAM, bastion, or CI), approver, timestamp, and rotation-readiness status.
 
