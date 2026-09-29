@@ -181,11 +181,12 @@ jq --version
 
 ### 4.2 Cluster Health Check
 
-Run this before every release cycle. All controllers must be healthy before sync, rollback, or rotation work proceeds.
+Run this before every release cycle. All controllers must be healthy before sync, rollback, or rotation work proceeds. Save the block as a script and run it with `bash`; pasted into a live shell, `set -e` and `exit 1` close the session on the first failed check.
 
 The RBAC checks use `kubectl auth can-i --as` to test controller ServiceAccount permissions. The operator or CI identity must be allowed to impersonate those accounts; most production operator roles should not have broad impersonation rights. If you lack permission, have a platform administrator or approved CI identity run this block and attach the non-secret results to the deployment ticket.
 
 ```bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 fail() {
