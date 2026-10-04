@@ -153,7 +153,7 @@ The platform team pins exact versions in the infrastructure repository. Check co
 
 | Tool / Resource | Requirement | Purpose |
 | --- | --- | --- |
-| AWS CLI | v2; approved role | EKS auth, read-only validation, and break-glass evidence |
+| AWS CLI | v2; approved role | EKS auth, read-only validation, approved secret seeding, and break-glass evidence |
 | kubectl | Compatible with cluster | Health, rollout, RBAC, and Secret-object checks |
 | Helm | 3.x; platform-pinned | Chart rendering during local validation and CI |
 | Argo CD CLI | Compatible with server | Application status, sync, wait, history, rollback |
@@ -161,8 +161,7 @@ The platform team pins exact versions in the infrastructure repository. Check co
 | External Secrets Operator | Platform-pinned; custom resource definitions (CRDs) installed | Syncs AWS Secrets Manager values to Kubernetes Secret objects |
 | ESO controller RBAC | `create` on `serviceaccounts/token` for ServiceAccounts referenced by `auth.jwt.serviceAccountRef` | Allows ESO to request short-lived projected tokens through the Kubernetes TokenRequest API |
 | Reloader | Platform-pinned; reload strategy = annotations | Triggers rolling restarts when watched Secrets/ConfigMaps change |
-| Python + PyYAML | Python 3.x and PyYAML | Fast CI guardrail for rendered workload annotations |
-| jq | 1.6 or later | Safe JSON construction during approved secret seeding |
+| Python + PyYAML | Python 3.x and PyYAML | Fast CI guardrail for rendered workload annotations; approved secret-seeding script |
 | Approved password manager or privileged access management (PAM) CLI | Platform-approved client, authenticated with multi-factor authentication (MFA) | Supplies the initial secret value to the seeding workflow without exposing it to a shell |
 
 ### 4.1 Local Tool Validation
@@ -176,7 +175,6 @@ helm version --short
 argocd version --client
 terraform version
 python3 -c "import yaml; print('PyYAML available')"
-jq --version
 ```
 
 ### 4.2 Cluster Health Check
@@ -453,51 +451,58 @@ Seeding sets the initial secret value and is the only approved human write path 
 2. The administrator opens a private session with MFA. **The secret value is never typed, pasted, echoed, or interpolated into a shell.** It flows from the password manager through the input stream to AWS and appears nowhere else.
 
     !!! danger "Do not disable session controls"
-        Keep shell history and terminal recording enabled. PAM session capture is required, and step 7 relies on its audit trail. Both forms below keep the value out of process arguments (`argv`) and shell history without disabling these controls.
+        Keep shell history and terminal recording enabled. PAM session capture is required, and step 5 relies on its audit trail. The script below keeps the value out of process arguments (`argv`) and shell history without disabling these controls.
 
-3. Use one of these approved forms. Both read directly from the password-manager CLI, keeping the value out of the shell prompt, `argv`, and history.
+3. Seed the value with the script below. It calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem.
 
-    **Form A, no file on disk (preferred).** Process substitution passes a file descriptor to the AWS CLI without writing a plaintext copy to the filesystem.
+    Save this as `seed-secret.py`, replace the placeholders with your approved command and resource names, and run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password. Never put the actual password in the script. Sign in to the password manager before you run the script. The script captures the password manager's output, so a sign-in prompt or error message may not appear.
 
-    ```bash
-    # Requires bash or zsh. Use Form B in a POSIX shell.
-    aws secretsmanager put-secret-value \
-      --secret-id nova/<service>/<secret_name> \
-      --secret-string file://<(<password-manager-cli> read "<pm-item-reference>" \
-        | jq -Rn '{password: input}')
-    ```
+    ```python
+    import json
+    import subprocess
+    import sys
 
-    **Form B, temporary file with restricted permissions.** Set the umask *before* creating the file; applying `chmod` afterward leaves a window in which it is world-readable.
+    try:
+        result = subprocess.run(
+            ["<password-manager-cli>", "read", "<pm-item-reference>"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
+        raw = result.stdout
+        # Remove one normal command-output line ending.
+        if raw.endswith(b"\r\n"):
+            raw = raw[:-2]
+        elif raw.endswith(b"\n"):
+            raw = raw[:-1]
+        password = raw.decode("utf-8")
+    except (OSError, subprocess.CalledProcessError, UnicodeError):
+        sys.exit("Password retrieval failed; AWS was not called.")
 
-    ```bash
-    umask 077  # remove group/other permissions from new files
-    if SECURE_DIR="$(mktemp -d "<approved-encrypted-directory>/nova-seed.XXXXXX")"; then
-      SECRET_FILE="${SECURE_DIR}/<service>-secret.json"
-      <password-manager-cli> read "<pm-item-reference>" \
-        | jq -Rn '{password: input}' > "${SECRET_FILE}"
-      ls -l "${SECRET_FILE}"  # confirm -rw------- before continuing
-    else
-      echo "Could not create the secure directory. Stop here." >&2
-    fi
+    if not password or "\r" in password or "\n" in password:
+        sys.exit("Expected one nonempty password line; AWS was not called.")
+
+    try:
+        outcome = subprocess.run(
+            [
+                "aws", "secretsmanager", "put-secret-value",
+                "--secret-id", "nova/<service>/<secret_name>",
+                "--secret-string", "file:///dev/stdin",
+            ],
+            input=json.dumps({"password": password}).encode("utf-8"),
+        )
+    except OSError:
+        sys.exit("Could not start the AWS CLI.")
+
+    sys.exit(outcome.returncode)
     ```
 
     !!! danger "Never place the value in argv"
         Do not use `--secret-string "$(<password-manager-cli> read ...)"` or hand-write the JSON in a heredoc. Command substitution exposes plaintext in process arguments to `ps` and local processes while the command runs. A heredoc requires pasting the value into the terminal, which step 2 forbids.
 
-    !!! note "If no password-manager CLI is available"
-        Run Form B's `umask` line and `if` block with `: > "${SECRET_FILE}"` in place of the password-manager pipeline; that creates the empty file, and `ls -l` must show `-rw-------`. Save the value to that path with the password manager's own save-to-file function, then confirm `-rw-------` again. The file must be JSON with a `password` string field, for example `{"password":"<value>"}`, not a raw password or a vendor export. Do not route it through the terminal, the clipboard, or an editor buffer.
+    If no approved password-manager CLI is available, or the value contains line breaks, stop and use a separately approved seeding workflow.
 
-    These examples accept single-line passwords only. The command safely escapes quotes and backslashes but reads only the first line. Do not build the JSON by hand. Use an approved multiline-safe workflow for values containing line breaks.
-
-4. Create the first AWSCURRENT version with `put-secret-value` and a file reference. Form A already does this; for Form B, use the file from step 3.
-
-    ```bash
-    aws secretsmanager put-secret-value \
-      --secret-id nova/<service>/<secret_name> \
-      --secret-string "file://${SECRET_FILE}"
-    ```
-
-5. Verify with `describe-secret` only. Do not use `get-secret-value` during deployment verification.
+4. Verify with `describe-secret` only. Do not use `get-secret-value` during deployment verification.
 
     ```bash
     aws secretsmanager describe-secret \
@@ -505,18 +510,7 @@ Seeding sets the initial secret value and is the only approved human write path 
       --query "{Name:Name,VersionIdsToStages:VersionIdsToStages,KmsKeyId:KmsKeyId}"
     ```
 
-6. Form B only: remove the temporary file and directory immediately after seeding.
-
-    ```bash
-    shred -u "${SECRET_FILE}" 2>/dev/null || rm -f "${SECRET_FILE}"
-    rmdir "${SECURE_DIR}"
-    unset SECRET_FILE SECURE_DIR
-    ```
-
-    !!! note "shred is not a guarantee"
-        On copy-on-write filesystems and SSDs with wear leveling, `shred` cannot reliably overwrite the original blocks. Prefer Form A. Memory-backed storage such as `/dev/shm` can still write secrets to disk through swap.
-
-7. Record only non-secret evidence in the deployment ticket: secret ARN/name, KMS key ID, AWSCURRENT version ID, seeding path used (workstation, PAM, bastion, or CI), approver, timestamp, and rotation-readiness status.
+5. Record only non-secret evidence in the deployment ticket: secret ARN/name, KMS key ID, AWSCURRENT version ID, seeding path used (workstation, PAM, bastion, or CI), approver, timestamp, and rotation-readiness status.
 
 ## 6. GitOps Repository Layout
 
