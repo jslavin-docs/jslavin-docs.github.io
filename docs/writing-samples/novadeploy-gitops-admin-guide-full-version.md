@@ -760,6 +760,8 @@ argocd proj windows disable-manual-sync <project> <allow-window-id>
 
 Use only when a Git revert cannot meet the SLA deadline. If an App-of-Apps root app manages child Application CRs, suspend it during the approved incident window; otherwise, it may re-enable the child app and re-sync the broken commit.
 
+During a GitHub outage, add `--validate=false` to both `argocd app set` commands below; Argo CD otherwise rejects the change because it cannot reach the repository. The rollback then works only if Argo CD still has the last-good revision in its manifest cache or its local copy of the repository. A history entry alone is not enough.
+
 Run the break-glass sequence in this order:
 
 1. Confirm Argo CD and the Kubernetes API are reachable.
@@ -768,7 +770,7 @@ Run the break-glass sequence in this order:
 
 3. Suspend the App-of-Apps root app, then disable auto-sync on the target Application.
 
-4. Roll back the target Application to the last-good revision and wait for health.
+4. If the allow window is closed, enable the manual-sync override first. Roll back the target Application to the last-good revision, wait for health, then disable the override.
 
 5. Keep both suspended until the matching Git revert merges.
 
@@ -779,8 +781,12 @@ argocd app list --selector app.kubernetes.io/part-of=<root-app-name>
 argocd app set <root-app-name> --sync-policy none
 argocd app set <app-name> --sync-policy none
 argocd app history <app-name>
+# If the allow window is closed, also run the "proj windows" commands.
+argocd proj windows list <project>
+argocd proj windows enable-manual-sync <project> <allow-window-id>
 argocd app rollback <app-name> <revision-number>
 argocd app wait <app-name> --health
+argocd proj windows disable-manual-sync <project> <allow-window-id>
 # Leave target auto-sync disabled until the mandatory Git revert merges.
 ```
 

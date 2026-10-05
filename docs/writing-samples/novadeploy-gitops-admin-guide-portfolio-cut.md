@@ -299,6 +299,8 @@ Use the Argo CD Application name as the Helm release name, unless `source.helm.r
 | Secret value misconfiguration | Secrets Manager rollback + ESO re-sync | Roll back through the approved secret process. Use Git revert only for SecretStore, ExternalSecret, IAM, KMS, or rotation-config changes. |
 | Cluster unreachable | Infrastructure troubleshooting | Do not use Argo CD. Troubleshoot EKS control plane, networking, IAM, and node health first. |
 
+During a GitHub outage, add `--validate=false` to the `argocd app set` commands in steps 2 and 3; Argo CD otherwise rejects the change because it cannot reach the repository. The rollback then works only if Argo CD still has the last-good revision in its manifest cache or its local copy of the repository. A history entry alone is not enough.
+
 For Argo CD history rollback:
 
 1. Record the root and target Applications' current sync-policy settings in the incident ticket.
@@ -307,6 +309,6 @@ For Argo CD history rollback:
 
 3. Disable auto-sync on the target Application with `argocd app set <app-name> --sync-policy none`.
 
-4. Roll back to the last known good revision and verify health.
+4. Outside approved sync times, enable the incident-approved manual-sync override first. Roll back to the last known good revision, verify health, then disable the override.
 
 5. Keep both suspended until the matching Git revert merges, then restore their prior sync policies.
