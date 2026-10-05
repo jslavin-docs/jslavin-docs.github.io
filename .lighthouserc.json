@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "startServerCommand": "python -m http.server 8000 --directory site",
+      "startServerCommand": "python -u -m http.server 8000 --directory site",
       "startServerReadyPattern": "Serving HTTP",
       "url": [
         "http://localhost:8000/",
