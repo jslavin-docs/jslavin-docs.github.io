@@ -762,6 +762,8 @@ Use only when a Git revert cannot meet the SLA deadline. If an App-of-Apps root 
 
 During a GitHub outage, add `--validate=false` to both `argocd app set` commands below; Argo CD otherwise rejects the change because it cannot reach the repository. The rollback then works only if Argo CD still has the last-good revision in its manifest cache or its local copy of the repository. A history entry alone is not enough.
 
+A history rollback leaves resources that the bad commit added in place until the Git revert syncs. If one of them is causing the incident, review and approve every resource that the rollback output marks `ignored (requires pruning)`: `--prune` deletes all of them, including any from other commits. Then repeat step 4 with `--prune` added to `argocd app rollback` and with `kubectl rollout status deployment/<service> -n <namespace>` in place of the health wait. After a pruning rollback, Argo CD releases earlier than 3.4 can report the Application as `Missing` until the Git revert merges, so the health wait would not return.
+
 Run the break-glass sequence in this order:
 
 1. Confirm Argo CD and the Kubernetes API are reachable.
