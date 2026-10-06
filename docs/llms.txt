@@ -6,6 +6,10 @@ Headline outcomes: cut migration support tickets by 30%, took partner integratio
 
 Each page linked below is also served as clean Markdown at its URL plus index.md. The complete Markdown content of this site is exported at [llms-full.txt](https://jslavin-docs.github.io/llms-full.txt), regenerated on every build. An agent instruction file for working with this content is at [skill.md](https://jslavin-docs.github.io/skill.md).
 
+NovaDeploy is a fictional platform: both NovaDeploy samples are original demonstration writing and contain no employer or client information. Live production documentation Jeff authored (ClearBlade API references, quick start, webhooks, and edge guides) is linked from the [Portfolio](https://jslavin-docs.github.io/portfolio/) page.
+
+Contact: jslavin.docs@gmail.com
+
 ## Pages
 
 - [Home](https://jslavin-docs.github.io/index.md): positioning, specialties, headline metrics, and certifications
@@ -17,8 +21,6 @@ Each page linked below is also served as clean Markdown at its URL plus index.md
 - [NovaDeploy GitOps Administration Guide - Portfolio Cut](https://jslavin-docs.github.io/writing-samples/novadeploy-gitops-admin-guide-portfolio-cut/index.md): a 5-7-minute cut of a fictional operator runbook for deploying services to Amazon EKS with Argo CD, covering the deployment path and stop checkpoints
 - [NovaDeploy GitOps Administration Guide - Full Runbook](https://jslavin-docs.github.io/writing-samples/novadeploy-gitops-admin-guide-full-version/index.md): the complete fictional runbook spanning EKS, IAM, KMS, External Secrets Operator, Reloader, CI guardrails, verification, and rollback
 
-NovaDeploy is a fictional platform: both samples are original demonstration writing and contain no employer or client information. Live production documentation Jeff authored (ClearBlade API references, quick start, webhooks, and edge guides) is linked from the [Portfolio](https://jslavin-docs.github.io/portfolio/) page.
-
 ## Case studies
 
 - [Case Study: GCP IoT Core Migration](https://jslavin-docs.github.io/case-studies/gcp-iot-core-migration/index.md): how the ClearBlade IoT Core quick start was designed to prevent silent migration failures during Google's shutdown of Cloud IoT Core
@@ -27,4 +29,3 @@ NovaDeploy is a fictional platform: both samples are original demonstration writ
 
 - [LinkedIn](https://www.linkedin.com/in/jeff-slavin)
 - [GitHub](https://github.com/jslavin-docs)
-- Email: jslavin.docs@gmail.com
