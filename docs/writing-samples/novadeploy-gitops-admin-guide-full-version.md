@@ -557,7 +557,7 @@ metadata:
 spec:
   project: novadeploy-production
   source:
-    repoURL: https://github.com/novadeploy/nova-gitops
+    repoURL: https://github.example.com/novadeploy/nova-gitops
     targetRevision: main
     path: charts/api-gateway
     helm:
