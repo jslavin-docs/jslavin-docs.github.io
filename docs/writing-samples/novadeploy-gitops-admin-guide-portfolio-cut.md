@@ -207,7 +207,7 @@ After every sync, check health, rollout status, ExternalSecret readiness, Secret
 
 ```bash
 argocd app get <app-name> --refresh
-argocd app wait <app-name> --health
+argocd app wait <app-name> --sync --health
 kubectl rollout status deployment/<service> -n <namespace>
 
 kubectl get externalsecret <service>-app-secrets -n <namespace>
@@ -231,7 +231,7 @@ kubectl get secret <service>-app-secrets -n <namespace> \
 
 ## 7. Implementation Excerpt: CI Reloader Guardrail
 
-This CI check fails a PR if a workload using secrets lacks the required Reloader annotation. The full runbook includes ServiceAccount, SecretStore, IAM, KMS, and rotation examples.
+This CI check fails a PR if a workload using secrets lacks the required Reloader annotation. The full runbook includes ServiceAccount, SecretStore, IAM, and KMS examples and a rotation readiness gate.
 
 ```bash
 set -euo pipefail
@@ -309,6 +309,6 @@ For Argo CD history rollback:
 
 3. Disable auto-sync on the target Application with `argocd app set <app-name> --sync-policy none`.
 
-4. Outside approved sync times, enable the incident-approved manual-sync override first. Roll back to the last known good revision, verify health, then disable the override.
+4. Outside approved sync times, enable the incident-approved manual-sync override first. Roll back to the last known good revision, wait for health with `argocd app wait <app-name> --health`, then disable the override.
 
 5. Keep both suspended until the matching Git revert merges, then restore their prior sync policies.

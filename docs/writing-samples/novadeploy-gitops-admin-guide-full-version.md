@@ -223,11 +223,11 @@ kubectl wait --for=condition=Available deployment --all \
 
 RELOADER_STRATEGY=$(kubectl get deploy <reloader-deployment-name> \
   -n <reloader-namespace> \
-  -o jsonpath='{.spec.template.spec.containers[*].args}{" "}{.spec.template.spec.containers[*].env[?(@.name=="RELOAD_STRATEGY")].value}' \
+  -o jsonpath='{.spec.template.spec.containers[*].args}' \
   | tr '",[]' '    ')
 
 printf '%s\n' "${RELOADER_STRATEGY}" \
-  | grep -Eqi '(^|[[:space:]])(--)?reload-strategy[=[:space:]]+annotations([[:space:]]|$)|(^|[[:space:]])annotations([[:space:]]|$)' \
+  | grep -Eqi '(^|[[:space:]])(--)?reload-strategy[=[:space:]]+annotations([[:space:]]|$)' \
   || fail "Reloader is not configured with the required annotations reload strategy."
 
 ESO_SA=$(kubectl get deploy <eso-controller-deployment-name> \
@@ -275,7 +275,7 @@ for workload in deployments.apps statefulsets.apps daemonsets.apps; do
 done
 ```
 
-The strategy check normalizes the `jsonpath` array for `args` to match both `--reload-strategy=annotations` and `--reload-strategy annotations`. Confirm the flag and environment-variable names against the platform-pinned Reloader chart version before relying on this check.
+The strategy check normalizes the `jsonpath` array for `args` to match both `--reload-strategy=annotations` and `--reload-strategy annotations`. Confirm the flag name against the platform-pinned Reloader chart version before relying on this check.
 
 | Component | Pass Criteria |
 | --- | --- |
@@ -453,7 +453,7 @@ Seeding sets the initial secret value and is the only approved human write path 
     !!! danger "Do not disable session controls"
         Keep shell history and terminal recording enabled. PAM session capture is required, and step 5 relies on its audit trail. The script below keeps the value out of process arguments (`argv`) and shell history without disabling these controls.
 
-3. Seed the value with the script below. It calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem.
+3. Seed the value with the script below. It calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem unless the AWS CLI setting `cli_history` is enabled (it is off by default).
 
     Save this as `seed-secret.py`, replace the placeholders with your approved command and resource names, and run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password. Never put the actual password in the script. Sign in to the password manager before you run the script. The script captures the password manager's output, so a sign-in prompt or error message may not appear.
 
@@ -614,7 +614,7 @@ Close the deployment ticket only after all checks pass and the evidence contains
 
 ```bash
 argocd app get <app-name> --refresh
-argocd app wait <app-name> --health
+argocd app wait <app-name> --sync --health
 kubectl rollout status deployment/<service> -n <namespace>
 
 kubectl get externalsecret <service>-app-secrets -n <namespace>
@@ -700,7 +700,7 @@ kubectl delete pod secret-mount-check -n <namespace> --ignore-not-found
 ```bash
 kubectl rollout status deployment/<service> -n <namespace>
 kubectl get deploy <service> -n <namespace> \
-  -o go-template='{{ index .spec.template.metadata.annotations "reloader.stakater.com/last-reloaded-from" }}{{ "\n" }}'
+  -o go-template='{{range $k, $_ := .spec.template.metadata.annotations}}{{printf "%s\n" $k}}{{end}}'
 kubectl get pods -n <namespace> -l app=<service> \
   --sort-by=.metadata.creationTimestamp
 argocd app get <app-name> --refresh
@@ -751,7 +751,7 @@ If the allow schedule blocks an approved emergency sync, use this manual-sync ov
 ```bash
 argocd proj windows list <project>
 argocd proj windows enable-manual-sync <project> <allow-window-id>
-argocd app sync <app-name>
+argocd app sync <app-name> --prune
 argocd app wait <app-name> --health
 argocd proj windows disable-manual-sync <project> <allow-window-id>
 ```
@@ -777,7 +777,7 @@ Run the break-glass sequence in this order:
 ```bash
 argocd app get <root-app-name> --refresh
 argocd app get <app-name> --refresh
-argocd app list --selector app.kubernetes.io/part-of=<root-app-name>
+argocd app resources <root-app-name>
 argocd app set <root-app-name> --sync-policy none
 argocd app set <app-name> --sync-policy none
 argocd app history <app-name>
