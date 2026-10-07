@@ -301,7 +301,7 @@ Use the Argo CD Application name as the Helm release name, unless `source.helm.r
 
 During a GitHub outage, add `--validate=false` to the `argocd app set` commands in steps 2 and 3; Argo CD otherwise rejects the change because it cannot reach the repository. The rollback then works only if Argo CD still has the last-good revision in its manifest cache or its local copy of the repository. A history entry alone is not enough.
 
-A history rollback leaves resources that the bad commit added in place until the Git revert syncs. If one of them is causing the incident, review and approve every resource that the rollback output marks `ignored (requires pruning)`: `--prune` deletes all of them, including any from other commits. Then repeat step 4 with `--prune` added to `argocd app rollback` and with `kubectl rollout status deployment/<service> -n <namespace>` in place of the health wait. After a pruning rollback, Argo CD releases earlier than 3.4 can report the Application as `Missing` until the Git revert merges, so the health wait would not return.
+A history rollback leaves resources that the bad commit added in place until the Git revert syncs. If one of them is causing the incident, follow the review and `--prune` steps in [Section 9.2 of the full runbook](novadeploy-gitops-admin-guide-full-version.md#92-argo-cd-history-rollback).
 
 For Argo CD history rollback:
 
