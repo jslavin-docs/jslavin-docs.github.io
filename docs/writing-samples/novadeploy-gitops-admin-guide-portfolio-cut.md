@@ -307,7 +307,7 @@ For Argo CD history rollback:
 
 1. Record the root and target Applications' current sync-policy settings in the incident ticket.
 
-2. Suspend the App-of-Apps root app.
+2. Suspend the App-of-Apps root app with `argocd app set <root-app-name> --sync-policy none`.
 
 3. Disable auto-sync on the target Application with `argocd app set <app-name> --sync-policy none`.
 

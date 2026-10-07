@@ -446,7 +446,7 @@ Seeding sets the initial secret value and is the only approved human write path 
 !!! warning "Where seeding is allowed to happen"
     If your organization forbids production secrets on workstations, seed through the PAM session broker, an approved bastion or jump host, or a CI job. The CI job must assume the seeding role through OIDC and read the value from the approved secret broker. The commands are the same; only the host and identity change. Record the path used in the deployment ticket.
 
-1. A platform administrator retrieves the initial value from the approved password manager or PAM workflow.
+1. A platform administrator confirms that the initial value is available from the approved password manager or PAM workflow, without displaying or copying it.
 
 2. The administrator opens a private session with MFA. **The secret value is never typed, pasted, echoed, or interpolated into a shell.** It flows from the password manager through the input stream to AWS and appears nowhere else.
 
@@ -786,7 +786,7 @@ argocd app history <app-name>
 # If the allow window is closed, also run the "proj windows" commands.
 argocd proj windows list <project>
 argocd proj windows enable-manual-sync <project> <allow-window-id>
-argocd app rollback <app-name> <revision-number>
+argocd app rollback <app-name> <history-id>
 argocd app wait <app-name> --health
 argocd proj windows disable-manual-sync <project> <allow-window-id>
 # Leave target auto-sync disabled until the mandatory Git revert merges.
@@ -916,7 +916,7 @@ With the temporary file and `set -euo pipefail`, a failed `helm template` stops 
 | `<app-name>` | Argo CD Application name | `api-gateway` |
 | `<project>` | Argo CD AppProject name | `novadeploy-production` |
 | `<bad-sha>` | Git commit SHA being reverted | `3d1a7f0` |
-| `<revision-number>` | Argo CD history revision number | `42` |
+| `<history-id>` | Argo CD history ID (the ID column of `argocd app history`) | `42` |
 | `<root-app-name>` | App-of-Apps root Application name | `novadeploy-production-root` |
 | `<secret_name>` | Service-scoped Secrets Manager secret suffix | `db` |
 | `<password-manager-cli>` | Approved password manager or PAM command-line client | `op` |
