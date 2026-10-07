@@ -5,9 +5,10 @@ Internal link checker for a built MkDocs site.
 Usage:
   python scripts/check_internal_links.py site
 
-Checks local HTML links in the generated site directory. External links,
-mailto:, tel:, JavaScript links, and pure fragments are ignored to avoid
-blocking deploys on third-party rate limits or anti-bot behavior.
+Checks local HTML links in the generated site directory, including same-page
+anchors and absolute links that point back to this site. Other external links,
+mailto:, tel:, and JavaScript links are ignored to avoid blocking deploys on
+third-party rate limits or anti-bot behavior.
 """
 
 from __future__ import annotations
@@ -23,6 +24,7 @@ class LinkParser(HTMLParser):
         super().__init__()
         self.links: list[tuple[str, str]] = []
         self.ids: set[str] = set()
+        self.canonical: str | None = None
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attrs_dict = {k: v for k, v in attrs}
@@ -30,6 +32,8 @@ class LinkParser(HTMLParser):
             value = attrs_dict.get(attr)
             if value:
                 self.ids.add(value)
+        if tag == "link" and attrs_dict.get("rel") == "canonical":
+            self.canonical = attrs_dict.get("href")
         if tag in {"a", "link", "script", "img", "source"}:
             for attr in ("href", "src"):
                 value = attrs_dict.get(attr)
@@ -65,10 +69,38 @@ def html_target(site_dir: Path, current_file: Path, url: str) -> tuple[Path, str
 
 def should_skip(url: str) -> bool:
     stripped = url.strip()
-    if not stripped or stripped.startswith("#"):
+    if not stripped:
         return True
     parsed = urlparse(stripped)
     return parsed.scheme in {"http", "https", "mailto", "tel", "javascript", "data"}
+
+
+def site_root(site_dir: Path) -> tuple[str, str] | None:
+    """Return (host, base path) of this site, read from the home page's canonical link."""
+    home = site_dir / "index.html"
+    if not home.exists():
+        return None
+    parser = LinkParser()
+    parser.feed(home.read_text(encoding="utf-8", errors="ignore"))
+    parsed = urlparse(parser.canonical or "")
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        return None
+    return parsed.netloc.lower(), parsed.path if parsed.path.endswith("/") else parsed.path + "/"
+
+
+def to_local(url: str, root: tuple[str, str] | None) -> str:
+    """Turn an absolute link to this site into a root-relative one; leave other URLs unchanged."""
+    if root is None:
+        return url
+    parsed = urlparse(url.strip())
+    host, base = root
+    if parsed.scheme not in {"http", "https"} or parsed.netloc.lower() != host:
+        return url
+    path = parsed.path or "/"
+    if not (path + "/").startswith(base):
+        return url
+    local = "/" + path[len(base):].lstrip("/")
+    return local + ("#" + parsed.fragment if parsed.fragment else "")
 
 
 def main() -> int:
@@ -88,13 +120,23 @@ def main() -> int:
         links_by_file[html_file.resolve()] = [url for _, url in parser.links]
 
     failures: list[str] = []
+    root = site_root(site_dir)
 
     for html_file, links in links_by_file.items():
         for url in links:
-            if should_skip(url):
+            local_url = to_local(url, root)
+            if should_skip(local_url):
                 continue
 
-            target, fragment = html_target(site_dir, html_file, url)
+            if local_url.strip().startswith("#"):
+                # Same-page anchor: "#" and "#top" always mean the top of the page.
+                fragment = unquote(local_url.strip()[1:])
+                if fragment and fragment.lower() != "top" and not fragment.startswith(":~:"):
+                    if fragment not in ids_by_file[html_file]:
+                        failures.append(f"{html_file.relative_to(site_dir)} -> missing anchor {url}")
+                continue
+
+            target, fragment = html_target(site_dir, html_file, local_url)
 
             if not target.exists():
                 target_display = target.relative_to(site_dir) if is_relative_to(target, site_dir) else target
