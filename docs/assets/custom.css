@@ -552,3 +552,34 @@ label[data-a11y-toggle]:focus-visible,
 .md-nav__link:has(> .md-a11y-control:focus) {
   color: var(--md-primary-fg-color);
 }
+
+/* Accessibility: when a keyboard user tabs backwards, the browser can scroll the focused link or
+   button under the sticky header (WCAG 2.2, 2.4.11). While keyboard focus is inside the page
+   content, reserve the header's height at the top of the scroll area, and shorten the anchor offset
+   by the same amount so headings land where they did. Keep the :has() condition: reserving the
+   space all the time makes the page jump when focus or typing moves to the sticky header itself. */
+html:has(.md-content :focus-visible) { scroll-padding-top: 2.4rem; }
+html:has(.md-content :focus-visible) .md-typeset :target { --md-scroll-margin: 1.2rem; }
+
+/* Accessibility: the theme's hidden "Back to top" button stays a keyboard stop until the page is
+   first scrolled, so on a page that fits the window (the 404 page) Tab lands on nothing visible. */
+.md-top[hidden] { visibility: hidden; }
+
+/* Accessibility: two more theme defaults measure just under the 4.5:1 WCAG AA minimum: the phone
+   menu's "Table of contents" title (4.41:1) and search preview text on a hovered or focused
+   result (4.48:1). */
+.md-nav--primary .md-nav__title[for="__toc"] {
+  color: hsla(0, 0%, 0%, 0.6);
+}
+.md-search-result .md-typeset {
+  color: hsla(0, 0%, 0%, 0.6);
+}
+
+/* Accessibility: the theme marks the keyboard-focused search result only with a pale tint (1.13:1
+   against white) and removes the outline. Add an outline so focus does not rely on color alone
+   (WCAG 2.2, 1.4.1 and 2.4.7). */
+.md-search-result__link:focus-visible,
+.md-search-result__more > summary:focus-visible {
+  outline: 2px solid var(--md-primary-fg-color);
+  outline-offset: -2px;
+}
