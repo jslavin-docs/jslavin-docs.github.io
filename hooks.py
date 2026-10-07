@@ -122,7 +122,11 @@ def on_page_markdown(markdown, page, config, files):
             "or has been modified. " + regenerate
         )
 
-    replacement = '\n<div class="prerendered-diagram">\n' + svg.strip() + "\n</div>\n"
+    # Keep the diagram's label text out of the site search index: the search
+    # plugin joins its line-broken labels into run-together words. The plugin
+    # removes this marker again, so the published page is unchanged.
+    inline_svg = svg.strip().replace("<svg ", '<svg data-search-exclude="true" ', 1)
+    replacement = '\n<div class="prerendered-diagram">\n' + inline_svg + "\n</div>\n"
     fence = fences[0]
     return markdown[:fence.start()] + replacement + markdown[fence.end():]
 
