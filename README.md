@@ -24,7 +24,7 @@ API documentation · OpenAPI · SDK documentation · Information architecture ·
 - **GitHub Pages** — static-site publishing for a public technical writing portfolio
 - **Docs as Code workflow** — content authored in Markdown, configuration managed in YAML, and version-controlled in Git
 - **AI-retrieval artifacts** — `llms.txt`, a build-generated `llms-full.txt`, Markdown versions of every page, and an agent instruction file (`skill.md`) expose the site content to LLM-based tools via the MkDocs hook in `hooks.py`
-- **Documentation QA** — `mkdocs build --strict` and an internal link check run in CI; a broken link or build warning blocks the deploy
+- **Documentation QA** — `mkdocs build --strict` and an internal link check run in CI; build warnings and failed internal link checks block the deploy
 
 ## Repository structure
 
