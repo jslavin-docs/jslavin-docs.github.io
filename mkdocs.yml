@@ -55,7 +55,10 @@ markdown_extensions:
   - pymdownx.inlinehilite
 
 plugins:
-  - search
+  # Also split words at slashes and brackets, so a term such as "Scrum" in
+  # "Agile/Scrum" or "PDF" in "(PDF)" can be found by the site search.
+  - search:
+      separator: '[\s\-/()]+'
   - social:
       cards_dir: assets/images/cards
   # Serve the Roboto font files from this site instead of Google's servers.
