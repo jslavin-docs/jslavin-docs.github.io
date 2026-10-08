@@ -453,10 +453,46 @@ def on_post_template(output_content, template_name, config):
 
 # Runtime adapter for the existing theme; published as a cached asset at build time.
 _ACCESSIBILITY_SCRIPT = r"""
-/* Small accessibility adapter for Material's existing checkbox controls.
+/* Small accessibility adapter for Material's existing checkbox controls and wide tables.
  * Keep the theme's search worker, arrow navigation and ordinary Tab exit. */
 (() => {
   "use strict";
+  // Wide tables scroll sideways inside a wrapper the theme adds at page load.
+  // Safari does not let keyboard users reach such a scroll area, so make each
+  // wrapper a named tab stop for as long as its table overflows.
+  function syncWideTables() {
+    for (const wrap of document.querySelectorAll(".md-typeset__scrollwrap")) {
+      const table = wrap.querySelector("table");
+      // A 1px overflow can be rounding, so it does not add a tab stop. An existing
+      // tab stop stays until nothing overflows, so focusing it cannot remove it.
+      const slack = wrap.hasAttribute("tabindex") ? 0 : 1;
+      if (table && wrap.scrollWidth > wrap.clientWidth + slack) {
+        const headings = [...table.querySelectorAll("thead th")].map(cell => cell.textContent.trim());
+        wrap.tabIndex = 0;
+        wrap.setAttribute("role", "region");
+        wrap.setAttribute("aria-label", "Scrollable table: " + headings.join(", "));
+      } else {
+        wrap.removeAttribute("tabindex");
+        wrap.removeAttribute("role");
+        wrap.removeAttribute("aria-label");
+      }
+    }
+  }
+  // Check once the theme has wrapped the tables (its DOMContentLoaded listener
+  // is registered before this one), then whenever a table or its wrapper
+  // changes size: window resize, rotation, zoom, text size, late fonts.
+  const tableSizes = typeof ResizeObserver === "function" ? new ResizeObserver(syncWideTables) : null;
+  function watchWideTables() {
+    syncWideTables();
+    for (const table of document.querySelectorAll(".md-typeset__scrollwrap table")) {
+      tableSizes?.observe(table);
+      tableSizes?.observe(table.closest(".md-typeset__scrollwrap"));
+    }
+  }
+  document.addEventListener("DOMContentLoaded", watchWideTables);
+  window.addEventListener("load", watchWideTables);
+  window.addEventListener("resize", syncWideTables);
+
   const search = document.getElementById("__search");
   const drawer = document.getElementById("__drawer");
   const panel = document.getElementById("site-search");
