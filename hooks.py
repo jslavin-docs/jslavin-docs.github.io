@@ -454,7 +454,7 @@ def on_post_template(output_content, template_name, config):
 # Runtime adapter for the existing theme; published as a cached asset at build time.
 _ACCESSIBILITY_SCRIPT = r"""
 /* Small accessibility adapter for Material's existing checkbox controls and wide tables.
- * Keep the theme's search worker, arrow navigation and ordinary Tab exit. */
+ * Keep the theme's search worker and arrow navigation. */
 (() => {
   "use strict";
   // Wide tables scroll sideways inside a wrapper the theme adds at page load.
@@ -624,6 +624,20 @@ _ACCESSIBILITY_SCRIPT = r"""
   });
 
   document.addEventListener("keydown", event => {
+    // Tab leaves the search field. The theme closes the search and blurs the field
+    // first, and Safari then restarts Tab from the top of the page. Close the
+    // search here and keep the field focused, so Tab moves on from it.
+    // (WebKit on Linux reports Shift+Tab as an unidentified key with code "Tab".)
+    const tab = event.key === "Tab" || (event.key === "Unidentified" && event.code === "Tab");
+    if (tab && !event.isComposing && !event.ctrlKey && !event.metaKey &&
+        search.checked && panel.contains(event.target)) {
+      event.stopPropagation();
+      if (event.target !== query) query.focus({ preventScroll: true });
+      close(search);
+      // If Tab had nowhere to go and the field kept focus, open the search again.
+      setTimeout(() => { if (document.activeElement === query && !search.checked) search.click(); });
+      return;
+    }
     if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
     const target = event.target instanceof Element ? event.target : null;
     const control = target?.closest('[data-a11y-toggle][role="button"]');
