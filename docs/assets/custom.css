@@ -583,3 +583,28 @@ html:has(.md-content :focus-visible) .md-typeset :target { --md-scroll-margin: 1
   outline: 2px solid var(--md-primary-fg-color);
   outline-offset: -2px;
 }
+
+/* Accessibility: the footer bar is dark, so the hover and focus color set above left its links at
+   2.61:1. Keep them light there, as the theme does. Also keep the header's GitHub link above
+   4.5:1 on hover (the theme fades it to 4.28:1). */
+.md-footer-meta.md-typeset a:not(.button):not(.md-button):not(.feature-card):not(.portfolio-card):is(:hover, :focus) {
+  color: var(--md-footer-fg-color);
+}
+.md-header__source .md-source:hover {
+  opacity: 0.75;
+}
+
+/* Accessibility: a wide table scrolls sideways inside a wrapper that reaches past the text column
+   to the screen edges, so a focus outline around that wrapper would be cut off. While a keyboard
+   user has focus on the wrapper, pull its sides in to the text column and outline it there. The
+   margin and padding changes cancel out, so the table stays where it is. Keep the outline outside
+   the wrapper: Safari paints an inside outline underneath the scrolling table. */
+.md-typeset .md-typeset__scrollwrap:focus-visible {
+  margin-right: 0;
+  margin-left: 0;
+  outline: 2px solid var(--md-primary-fg-color);
+}
+.md-typeset .md-typeset__scrollwrap:focus-visible > .md-typeset__table {
+  padding-right: 0;
+  padding-left: 0;
+}
