@@ -63,7 +63,7 @@ This example verifies a secret refresh, including workload restarts, while prote
 | Argo CD after sync | `api-gateway` syncs to `9f28b6c` and returns `Synced / Healthy`. | The cluster matches the merged Git configuration. |
 | ExternalSecret verified | `Ready=True` and `SecretSynced`. | ESO created or updated the Kubernetes Secret object. |
 | Secret checked safely | Secret object exists; key-name output shows `DATABASE_PASSWORD`. | Expected keys are present without printing or decoding values. |
-| Reloader rollout confirmed | Rollout succeeds; pods are newer than the Secret refresh; last-reloaded annotation is present. | The refresh triggered a controlled rolling restart, not a manual pod delete. |
+| Reloader rollout confirmed | Rollout succeeds; pods are newer than the Secret data change; last-reloaded annotation is present. | The data change triggered a controlled rolling restart, not a manual pod delete. |
 | Rollback decision | No rollback: Argo CD is Healthy, ExternalSecret is Ready, mount prints only `secret-mounted`, and smoke tests pass. | Git remains authoritative. Failed checks would trigger a Git revert; Argo CD history rollback is for approved emergencies only. |
 
 ---
@@ -78,7 +78,7 @@ Apply these controls during deployment, verification, and recovery. The full run
 | Terraform source of truth | IAM, KMS, Secrets Manager metadata, rotation config, and Lambda permissions stay in Terraform. | Cloud permissions remain reviewable, reproducible, and importable after break-glass work. |
 | No plaintext secrets | Secret values never enter Git, Terraform state, PRs, CI logs, tickets, or chats. | Reviewers can validate controls without exposing credentials. |
 | Separate IAM roles for service accounts (IRSA) | The workload role never reads Secrets Manager; the dedicated ESO reader role is limited to `nova/<service>/*`. | Application pods do not receive broad secret-read permissions. |
-| Reloader safety | Workloads using secrets carry `reloader.stakater.com/auto: "true"` on root workload metadata. | Secret refreshes trigger controlled rolling restarts. |
+| Reloader safety | Workloads using secrets carry `reloader.stakater.com/auto: "true"` on root workload metadata. | Secret data changes trigger controlled rolling restarts. |
 | Argo CD compatibility | Application defines `ignoreDifferences` for the Reloader annotation and sets `RespectIgnoreDifferences=true`. | Argo CD does not undo Reloader restart patches during sync. |
 | Rotation gate | Keep `var.rotation_enabled=false` until KMS, Lambda, ESO, Reloader, and mount checks pass. | Enable rotation only when workloads can safely use refreshed secrets. |
 
@@ -225,7 +225,7 @@ kubectl get secret <service>-app-secrets -n <namespace> \
 | ExternalSecret | Ready=True and SecretSynced reason | Secret value output |
 | Kubernetes Secret | Object exists; expected key names are present | Decoded data or base64 payload |
 | Mount check | Disposable pod prints only secret-mounted | cat/print of mounted file content |
-| Reloader rollout | Pods recreated after Secret refresh; app remains healthy | Secret payload in logs, tickets, or screenshots |
+| Reloader rollout | Pods recreated after a Secret data change; app remains healthy | Secret payload in logs, tickets, or screenshots |
 
 ---
 

@@ -704,7 +704,8 @@ kubectl get deploy <service> -n <namespace> \
 kubectl get pods -n <namespace> -l app=<service> \
   --sort-by=.metadata.creationTimestamp
 argocd app get <app-name> --refresh
-# Expected: pods were recreated after the Secret refresh; app remains Synced / Healthy.
+# Expected: pods were recreated after a Secret data change; app remains Synced / Healthy.
+# If a periodic ESO refresh changes no Secret data, Reloader does not restart pods.
 ```
 
 ## 9. Rollback and Recovery
@@ -901,7 +902,7 @@ With the temporary file and `set -euo pipefail`, a failed `helm template` stops 
 | ExternalSecret state | Ready=True, SecretSynced reason, recent refresh time | Secret value output |
 | Kubernetes Secret | Object exists and expected key names are present | Decoded data or base64 content |
 | Mount check | Disposable pod reached Succeeded; log shows only secret-mounted | cat/print of mounted file content |
-| Reloader rollout | Rollout status and pod creation times after Secret refresh | Secret payload |
+| Reloader rollout | Rollout status and pod creation times after a Secret data change | Secret payload |
 | Rollback | Revert PR link, approval, commit SHA, app health after sync | Manual kubectl patch not represented in Git |
 
 ### 10.3 Common Placeholders
