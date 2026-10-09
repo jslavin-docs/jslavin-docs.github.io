@@ -85,6 +85,8 @@ Enable production rotation only after each item passes in staging and the produc
 
 - Run the secret mount check in Section 8.2.
 
+- Rotate the secret once in staging and confirm that every Deployment, StatefulSet, and DaemonSet that uses it started new pods (Section 8.3). The CI guardrail confirms the annotation, not the restart.
+
 
 
 ## 3. Architecture Overview
@@ -453,7 +455,7 @@ Seeding sets the initial secret value and is the only approved human write path 
     !!! danger "Do not disable session controls"
         Keep shell history and terminal recording enabled. PAM session capture is required, and step 5 relies on its audit trail. The script below keeps the value out of process arguments (`argv`) and shell history without disabling these controls.
 
-3. Seed the value with the script below. It calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem unless the AWS CLI setting `cli_history` is enabled (it is off by default).
+3. Seed the value with the script below. It first checks the secret and stops if a value already exists, so a rerun cannot replace a value already in use. It then calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem unless the AWS CLI setting `cli_history` is enabled (it is off by default).
 
     Save this as `seed-secret.py`, replace the placeholders with your approved command and resource names, and run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password. Never put the actual password in the script. Sign in to the password manager before you run the script. The script captures the password manager's output, so a sign-in prompt or error message may not appear.
 
@@ -461,6 +463,27 @@ Seeding sets the initial secret value and is the only approved human write path 
     import json
     import subprocess
     import sys
+
+    SECRET_ID = "nova/<service>/<secret_name>"
+
+    try:
+        check = subprocess.run(
+            [
+                "aws", "secretsmanager", "describe-secret",
+                "--secret-id", SECRET_ID,
+                "--output", "json",
+            ],
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+        has_value = bool(json.loads(check.stdout).get("VersionIdsToStages"))
+    except OSError:
+        sys.exit("Could not start the AWS CLI.")
+    except (subprocess.CalledProcessError, ValueError):
+        sys.exit("Could not check the secret; nothing was written.")
+
+    if has_value:
+        sys.exit("The secret already has a value; nothing was written.")
 
     try:
         result = subprocess.run(
@@ -477,16 +500,16 @@ Seeding sets the initial secret value and is the only approved human write path 
             raw = raw[:-1]
         password = raw.decode("utf-8")
     except (OSError, subprocess.CalledProcessError, UnicodeError):
-        sys.exit("Password retrieval failed; AWS was not called.")
+        sys.exit("Password retrieval failed; nothing was written.")
 
     if not password or "\r" in password or "\n" in password:
-        sys.exit("Expected one nonempty password line; AWS was not called.")
+        sys.exit("Expected one nonempty password line; nothing was written.")
 
     try:
         outcome = subprocess.run(
             [
                 "aws", "secretsmanager", "put-secret-value",
-                "--secret-id", "nova/<service>/<secret_name>",
+                "--secret-id", SECRET_ID,
                 "--secret-string", "file:///dev/stdin",
             ],
             input=json.dumps({"password": password}).encode("utf-8"),
@@ -628,12 +651,13 @@ kubectl get secret <service>-app-secrets -n <namespace> \
 
 ### 8.2 Secret Mount Check
 
-This disposable pod checks that the Secret mounts and is readable without exposing values. It prints only `secret-mounted` on success.
+This disposable pod checks that the Secret mounts and is readable without exposing values. It prints only `secret-mounted` on success. The first command removes any pod left by an earlier run, and `&&` stops the check if that or any later step fails, so each result comes from a new pod.
 
 The manifest meets the restricted Pod Security profile and namespace resource controls in `clusters/production/` (Section 7). These namespaces reject pods without a `securityContext` or `resources` block before attempting a mount. Run this check in the Secret's workload namespace; mounts cannot be checked across namespaces.
 
 ```bash
-cat <<'EOF' | kubectl apply -n <namespace> -f -
+kubectl delete pod secret-mount-check -n <namespace> --ignore-not-found &&
+cat <<'EOF' | kubectl apply -n <namespace> -f - &&
 apiVersion: v1
 kind: Pod
 metadata:
@@ -674,7 +698,7 @@ spec:
         defaultMode: 0440
 EOF
 kubectl wait --for=jsonpath='{.status.phase}'=Succeeded pod/secret-mount-check \
-  -n <namespace> --timeout=60s
+  -n <namespace> --timeout=60s &&
 kubectl logs secret-mount-check -n <namespace>
 kubectl delete pod secret-mount-check -n <namespace> --ignore-not-found
 ```
