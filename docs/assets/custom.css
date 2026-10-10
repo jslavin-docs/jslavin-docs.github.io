@@ -623,3 +623,24 @@ html:has(.md-content :focus-visible) .md-typeset :target { --md-scroll-margin: 1
     outline: none;
   }
 }
+
+/* Accessibility: the theme fades each code block's copy button to 7% black and only darkens it
+   while the mouse hovers over the block, so on touch devices (iPad, iPhone, Android) the button is
+   invisible until the block is tapped. Those devices report no hover; show the button there at the
+   theme's own hover shade. Desktops keep the hover design. */
+@media screen and (hover: none) {
+  .md-code__button {
+    color: var(--md-default-fg-color--light);
+  }
+}
+
+/* Accessibility: the permalink symbol beside each heading appears on hover in the theme's palest
+   gray (2.2:1 on white). Use the theme's mid gray (4.6:1) instead, and keep the primary blue, not
+   the paler accent, once a heading is the page target. Hover and focus already use the primary
+   blue through the link rule above. */
+.md-typeset .headerlink {
+  color: var(--md-default-fg-color--light);
+}
+.md-typeset :target > .headerlink {
+  color: var(--md-primary-fg-color);
+}
