@@ -614,3 +614,12 @@ html:has(.md-content :focus-visible) .md-typeset :target { --md-scroll-margin: 1
   outline: 2px solid var(--md-primary-fg-color);
   outline-offset: 2px;
 }
+
+/* The browser also draws its own ring on the focused code box, which would show two rings.
+   Drop the inner one only where the outline above is supported, so focus always stays visible. */
+@supports selector(:has(> code)) {
+  .md-typeset pre > code.focus-visible,
+  .md-typeset pre > code:focus-visible {
+    outline: none;
+  }
+}
