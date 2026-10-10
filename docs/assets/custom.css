@@ -608,3 +608,9 @@ html:has(.md-content :focus-visible) .md-typeset :target { --md-scroll-margin: 1
   padding-right: 0;
   padding-left: 0;
 }
+
+/* Keep keyboard focus visible while a wide code sample scrolls horizontally. */
+.md-typeset pre:has(> code:focus-visible) {
+  outline: 2px solid var(--md-primary-fg-color);
+  outline-offset: 2px;
+}
