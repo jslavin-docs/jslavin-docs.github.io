@@ -25,6 +25,8 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
 7. Adds accessible mobile controls and search status messages, gives the
    404 page a descriptive title, and publishes a small cached helper for
    keyboard operation, focus handling, and disabling character shortcuts.
+8. Keeps overflowing code samples keyboard-focusable on touch devices and
+   after fonts load, and removes navigation semantics from copy controls.
 
 Both exports are cleaned before they are written: presentation-only
 attribute lists are removed and raw HTML layout blocks are converted
@@ -433,7 +435,7 @@ def _adjust_theme_markup(html: str, source: str, helper_url: str) -> str:
 def on_post_page(output, page, config):
     """Adjust the theme markup on every rendered page."""
     return _adjust_theme_markup(output, page.file.src_uri,
-                                get_relative_url(str(_ACCESSIBILITY_PATH), page.url))
+                                get_relative_url(_ACCESSIBILITY_PATH.as_posix(), page.url))
 
 
 def on_post_template(output_content, template_name, config):
@@ -442,7 +444,7 @@ def on_post_template(output_content, template_name, config):
         return output_content
     # GitHub Pages serves this document at the missing URL, including nested
     # paths. Resolve its helper against the configured site, not that URL.
-    helper_url = urljoin(config["site_url"] or "/", str(_ACCESSIBILITY_PATH))
+    helper_url = urljoin(config["site_url"] or "/", _ACCESSIBILITY_PATH.as_posix())
     output_content = _adjust_theme_markup(output_content, template_name, helper_url)
     titles = list(re.finditer(r"<title>.*?</title>", output_content, re.DOTALL))
     if len(titles) != 1:
@@ -453,7 +455,7 @@ def on_post_template(output_content, template_name, config):
 
 # Runtime adapter for the existing theme; published as a cached asset at build time.
 _ACCESSIBILITY_SCRIPT = r"""
-/* Small accessibility adapter for Material's existing checkbox controls and wide tables.
+/* Accessibility adapter for Material's controls, wide tables, and code samples.
  * Keep the theme's search worker and arrow navigation. */
 (() => {
   "use strict";
@@ -492,6 +494,77 @@ _ACCESSIBILITY_SCRIPT = r"""
   document.addEventListener("DOMContentLoaded", watchWideTables);
   window.addEventListener("load", watchWideTables);
   window.addEventListener("resize", syncWideTables);
+
+  // A keyboard can be attached even when (hover) is false. Recheck code
+  // overflow after fonts load as well: scrollWidth can change without the
+  // code element's observed box changing size.
+  const article = document.querySelector(".md-content__inner");
+  const codeSelector = "pre > code";
+  const observedCode = new WeakSet();
+  let codeFrame = 0;
+
+  function scheduleCodeSync() {
+    if (!codeFrame) codeFrame = requestAnimationFrame(syncCodeBlocks);
+  }
+
+  const codeSizes = typeof ResizeObserver === "function" ?
+    new ResizeObserver(scheduleCodeSync) : null;
+
+  function syncCodeBlocks() {
+    codeFrame = 0;
+    if (!article) return;
+
+    // A copy button is an action, not page navigation. A span is also valid
+    // inside pre. Move the original buttons to preserve their listeners.
+    for (const nav of article.querySelectorAll("pre > nav.md-code__nav")) {
+      const actions = document.createElement("span");
+      actions.className = nav.className;
+      actions.append(...nav.childNodes);
+      nav.replaceWith(actions);
+    }
+
+    let heading = "Code sample";
+    for (const element of article.querySelectorAll("h1,h2,h3,h4,h5,h6,pre > code")) {
+      if (!element.matches(codeSelector)) {
+        const label = element.cloneNode(true);
+        label.querySelectorAll(".headerlink").forEach(link => link.remove());
+        heading = label.textContent.trim();
+        continue;
+      }
+      if (!observedCode.has(element)) {
+        observedCode.add(element);
+        codeSizes?.observe(element);
+      }
+      const overflowing = element.scrollWidth > element.clientWidth;
+      if (overflowing) {
+        if (element.getAttribute("tabindex") !== "0") element.tabIndex = 0;
+        // A named group gives focus context without adding more landmarks.
+        element.setAttribute("role", "group");
+        element.setAttribute("aria-label", "Scrollable code sample: " + heading);
+      } else {
+        if (element.hasAttribute("tabindex")) element.removeAttribute("tabindex");
+        element.removeAttribute("role");
+        element.removeAttribute("aria-label");
+      }
+    }
+  }
+
+  if (article) {
+    // Material also writes tabindex from its own ResizeObserver. Reconcile
+    // after those writes, with value checks above to avoid observer loops.
+    new MutationObserver(scheduleCodeSync).observe(article, {
+      childList: true, subtree: true, attributes: true,
+      attributeFilter: ["tabindex"]
+    });
+    scheduleCodeSync();
+    document.addEventListener("DOMContentLoaded", scheduleCodeSync);
+    window.addEventListener("load", scheduleCodeSync);
+    window.addEventListener("resize", scheduleCodeSync);
+    if (document.fonts) {
+      document.fonts.ready.then(scheduleCodeSync);
+      document.fonts.addEventListener("loadingdone", scheduleCodeSync);
+    }
+  }
 
   const search = document.getElementById("__search");
   const drawer = document.getElementById("__drawer");
