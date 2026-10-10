@@ -27,6 +27,47 @@ FENCE = re.compile(r"^```mermaid[ \t]*\n(.*?)^```[ \t]*$", re.MULTILINE | re.DOT
 OUTPUT = ROOT / "docs/assets/diagrams/novadeploy-architecture.svg"
 
 
+def normalize_html_labels(svg: str) -> str:
+    """Make Mermaid's paragraph labels valid when the SVG is inlined in HTML.
+
+    Mermaid puts HTML paragraphs inside spans in foreignObject labels. Keep
+    the outer spans and all measured geometry, replacing the paragraphs with
+    block-displayed spans. Transfer the renderer's paragraph CSS to them so
+    label margins, line breaks and background colors stay the same.
+    """
+    marker = "data-mermaid-paragraph"
+
+    def label(match: re.Match) -> str:
+        return re.sub(r"<p(?=[\s>])", f"<span {marker}=\"\"", match[0]).replace(
+            "</p>", "</span>"
+        )
+
+    svg = re.sub(r"<foreignObject\b[^>]*>.*?</foreignObject>", label, svg, flags=re.DOTALL)
+
+    def styles(match: re.Match) -> str:
+        # Restrict changes to selector lists; declarations (including font
+        # names and URLs) must stay byte-for-byte intact.
+        def rule(rule_match: re.Match) -> str:
+            selectors = re.sub(
+                r"(?<![\w-])p(?=$|[\s,.:#>+~\[])",
+                f"[{marker}]", rule_match[1]
+            )
+            return selectors + "{"
+
+        css = re.sub(r"([^{}]+)\{", rule, match[1])
+        paragraph_style = f"#novadeploy-architecture span[{marker}]{{display:block;color:inherit;fill:inherit;}}"
+        if marker in svg and paragraph_style not in css:
+            css += paragraph_style
+        return "<style>" + css + "</style>"
+
+    svg = re.sub(r"<style>(.*?)</style>", styles, svg, flags=re.DOTALL)
+    root = ET.fromstring(svg)
+    xhtml = "{http://www.w3.org/1999/xhtml}"
+    if any(element.find(xhtml + "p") is not None for element in root.iter(xhtml + "span")):
+        raise ValueError("Mermaid produced unsupported paragraph-in-span label markup.")
+    return svg
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--puppeteer-config", type=Path)
@@ -78,6 +119,7 @@ def main() -> None:
         )
 
     svg = re.sub(r"<svg\b([^>]*)>", describe, svg, count=1)
+    svg = normalize_html_labels(svg)
 
     element = ET.fromstring(svg)
     view_box = [float(value) for value in element.attrib["viewBox"].split()]
