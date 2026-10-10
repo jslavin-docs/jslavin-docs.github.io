@@ -27,13 +27,17 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
    keyboard operation, focus handling, and disabling character shortcuts.
 8. Keeps overflowing code samples keyboard-focusable on touch devices and
    after fonts load, and removes navigation semantics from copy controls.
-9. Drops the dangling for="__toc" from the "Table of contents" title in
-   the TOC sidebar on pages outside the navigation, where the theme never
-   renders the __toc checkbox, so the label no longer fails HTML validation.
+9. Turns the "Table of contents" title in the TOC sidebar into plain text
+   on pages outside the navigation, where the theme never renders the
+   __toc checkbox its label pointed at, so the page no longer fails HTML
+   validation or carries an orphaned form label.
 10. Moves the theme's autocomplete="off" from its two hidden menu and
    search checkboxes, where HTML does not allow it, to a hidden form that
    owns them. Browsers consult the owning form, so the drawer and search
    still reset after back navigation and Firefox reloads as upstream intends.
+11. Marks the theme's inline icon graphics and its two logo images as
+   decorative. Each sits inside a control or link that already has a name,
+   so screen readers skip the drawing instead of announcing it (or "logo").
 
 Both exports are cleaned before they are written: presentation-only
 attribute lists are removed and raw HTML layout blocks are converted
@@ -393,8 +397,9 @@ def _add_web_accessibility(html: str, source: str, helper_url: str) -> str:
         elif target == "__toc":
             # Pages outside the navigation have no __toc checkbox, so the
             # theme's "Table of contents" title points at a control that does
-            # not exist. Keep the title; drop the dangling association.
-            return _replace_once(opening, ' for="__toc"', "", source) + contents + "</label>"
+            # not exist. Keep the title and its class; make it plain text.
+            title = _replace_once(opening, ' for="__toc"', "", source)
+            return _replace_once(title, "<label", "<div", source) + contents + "</div>"
         else:
             return match.group(0)
 
@@ -465,10 +470,55 @@ def _own_toggle_state(html: str, source: str) -> str:
         html, SEARCH_TOGGLE, SEARCH_TOGGLE.replace(' autocomplete="off"', ' form="__toggles"'), source)
 
 
+UNNAMED_SVG = re.compile(r'<svg\b(?![^>]*\s(?:role|aria-[a-z]+)=)([^>]*)>')
+LOGO_IMAGE = re.compile(r'(<img src="[^"]*logo\.svg") alt="logo">')
+ARTICLE = re.compile(r'(<article\b.*?</article>)', re.DOTALL)
+
+
+def _mark_decorative_graphics(html: str, source: str) -> str:
+    """Mark the theme's icon graphics and logo images as decorative.
+
+    The theme's ten inline SVG icons (menu, search and its back arrow,
+    clear, the two repository links, back to top, and the two footer links)
+    sit inside controls and links that already carry a name, and both logo
+    images sit inside links named after the site. None adds information,
+    so hide the drawings from assistive technology instead of leaving
+    unnamed graphics for screen readers to announce.
+
+    Only the theme's chrome around the article is touched: graphics inside
+    the page content, such as the pre-rendered diagram, keep whatever
+    semantics their author gave them. The build fails if the icon or logo
+    counts change, so a theme upgrade is caught in CI.
+    """
+    parts = ARTICLE.split(html, maxsplit=1)
+    if len(parts) != 3:
+        raise PluginError(f"{source}: expected one article element; update ARTICLE in hooks.py.")
+    before, article, after = parts
+    icons = 0
+    chrome = []
+    for chunk in (before, after):
+        chunk, count = UNNAMED_SVG.subn(r'<svg aria-hidden="true"\1>', chunk)
+        icons += count
+        chrome.append(chunk)
+    html = chrome[0] + article + chrome[1]
+    if icons != 10:
+        raise PluginError(
+            f"{source}: expected the theme's ten unnamed icons, found {icons}; "
+            "update UNNAMED_SVG in hooks.py for the current theme."
+        )
+    html, logos = LOGO_IMAGE.subn(r'\1 alt="">', html)
+    if logos != 2:
+        raise PluginError(
+            f"{source}: expected the theme's two logo images; update LOGO_IMAGE in hooks.py."
+        )
+    return html
+
+
 def _adjust_theme_markup(html: str, source: str, helper_url: str) -> str:
     """Apply the shared theme adjustments to one rendered page."""
     html = _drop_repo_stats_lookup(_name_search_dialog(html, source), source)
     html = _own_toggle_state(html, source)
+    html = _mark_decorative_graphics(html, source)
     return _add_web_accessibility(html, source, helper_url)
 
 
