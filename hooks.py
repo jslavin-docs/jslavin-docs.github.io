@@ -27,6 +27,13 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
    keyboard operation, focus handling, and disabling character shortcuts.
 8. Keeps overflowing code samples keyboard-focusable on touch devices and
    after fonts load, and removes navigation semantics from copy controls.
+9. Drops the dangling for="__toc" from the "Table of contents" title in
+   the TOC sidebar on pages outside the navigation, where the theme never
+   renders the __toc checkbox, so the label no longer fails HTML validation.
+10. Moves the theme's autocomplete="off" from its two hidden menu and
+   search checkboxes, where HTML does not allow it, to a hidden form that
+   owns them. Browsers consult the owning form, so the drawer and search
+   still reset after back navigation and Firefox reloads as upstream intends.
 
 Both exports are cleaned before they are written: presentation-only
 attribute lists are removed and raw HTML layout blocks are converted
@@ -383,6 +390,11 @@ def _add_web_accessibility(html: str, source: str, helper_url: str) -> str:
             text = BeautifulSoup(contents, "html.parser").get_text(" ", strip=True)
             action = "back to navigation" if "md-nav__title" in classes else "table of contents"
             name = f"{text}: {action}"
+        elif target == "__toc":
+            # Pages outside the navigation have no __toc checkbox, so the
+            # theme's "Table of contents" title points at a control that does
+            # not exist. Keep the title; drop the dangling association.
+            return _replace_once(opening, ' for="__toc"', "", source) + contents + "</label>"
         else:
             return match.group(0)
 
@@ -426,9 +438,37 @@ def _add_web_accessibility(html: str, source: str, helper_url: str) -> str:
                          f'<script src="{escape(helper_url, quote=True)}" defer></script>\n</body>', source)
 
 
+TOGGLE_FORM = '<form id="__toggles" autocomplete="off" hidden></form>'
+DRAWER_TOGGLE = '<input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">'
+SEARCH_TOGGLE = '<input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">'
+
+
+def _own_toggle_state(html: str, source: str) -> str:
+    """Move autocomplete="off" from the theme's toggle checkboxes to a form.
+
+    The theme sets autocomplete="off" on its hidden drawer and search
+    checkboxes so browsers do not restore a checked state after back
+    navigation (or a reload in Firefox). HTML does not allow the attribute
+    on checkboxes, so validators flag it on every page. Browsers apply the
+    same opt-out from the control's owning form, so give both checkboxes a
+    hidden, empty form owner carrying the attribute instead. The form must
+    precede the checkboxes: Firefox decides at parse time. The theme's
+    sibling selectors (~) are unaffected by the extra element.
+
+    The build fails if either checkbox is not found exactly once, so a theme
+    upgrade that changes the markup is caught in CI.
+    """
+    html = _replace_once(
+        html, DRAWER_TOGGLE,
+        TOGGLE_FORM + "\n    " + DRAWER_TOGGLE.replace(' autocomplete="off"', ' form="__toggles"'), source)
+    return _replace_once(
+        html, SEARCH_TOGGLE, SEARCH_TOGGLE.replace(' autocomplete="off"', ' form="__toggles"'), source)
+
+
 def _adjust_theme_markup(html: str, source: str, helper_url: str) -> str:
     """Apply the shared theme adjustments to one rendered page."""
     html = _drop_repo_stats_lookup(_name_search_dialog(html, source), source)
+    html = _own_toggle_state(html, source)
     return _add_web_accessibility(html, source, helper_url)
 
 
