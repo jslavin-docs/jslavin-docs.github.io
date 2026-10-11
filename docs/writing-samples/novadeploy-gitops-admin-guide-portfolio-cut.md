@@ -1,4 +1,5 @@
 ---
+title: "NovaDeploy GitOps: Portfolio Cut"
 description: "Concise portfolio cut of a fictional NovaDeploy GitOps administration guide for Amazon EKS, Argo CD, ESO, secrets, verification, and rollback workflows."
 social:
   cards_layout_options:
