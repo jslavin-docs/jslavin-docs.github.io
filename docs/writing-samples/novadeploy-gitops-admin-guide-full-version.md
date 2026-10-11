@@ -455,7 +455,13 @@ Seeding sets the initial secret value and is the only approved human write path 
     !!! danger "Do not disable session controls"
         Keep shell history and terminal recording enabled. PAM session capture is required, and step 5 relies on its audit trail. The script below keeps the value out of process arguments (`argv`) and shell history without disabling these controls. The one setting that must be off is the AWS CLI's optional command history (`cli_history`): when enabled, it records request parameters, including this value, on the host.
 
-3. Seed the value with the script below. Before you run it, turn off the AWS CLI's optional command history with `aws configure set cli_history disabled`. It is off by default, and the command is safe to repeat. The script first checks the secret and stops if a value already exists, so a rerun cannot replace a value already in use. It then calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem. The first check cannot stop a second seeding that starts while the first is still running, so the deployment ticket names one person or job to seed each secret, and nobody else runs the script for that secret. As a backstop, the script sends a fixed version ID (`--client-request-token`) built from the ticket and secret name, so if two seedings do overlap, Secrets Manager accepts the second write only when its value matches the first and rejects it otherwise.
+3. Seed the value with the script below. Before you run it, turn off the AWS CLI's optional command history with `aws configure set cli_history disabled`. It is off by default, and the command is safe to repeat.
+
+    The script first checks the secret and stops if a value already exists, so a rerun cannot replace a value already in use. It then calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem.
+
+    The first check cannot stop a second seeding that starts while the first is still running, so the deployment ticket names one person or job to seed each secret, and nobody else runs the script for that secret.
+
+    As a backstop, the script sends a fixed version ID (`--client-request-token`) built from the ticket and secret name, so if two seedings do overlap, Secrets Manager accepts the second write only when its value matches the first and rejects it otherwise.
 
     Save this as `seed-secret.py`, replace the placeholders with your approved command, resource names, and deployment ticket ID, and run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password. Never put the actual password in the script. Sign in to the password manager before you run the script. The script captures the password manager's output, so a sign-in prompt or error message may not appear.
 
@@ -794,7 +800,9 @@ Use only when a Git revert cannot meet the SLA deadline. If an App-of-Apps root 
 
 During a GitHub outage, add `--validate=false` to both `argocd app set` commands below; Argo CD otherwise rejects the change because it cannot reach the repository. The rollback then works only if Argo CD still has the last-good revision in its manifest cache or its local copy of the repository. A history entry alone is not enough.
 
-A history rollback leaves resources that the bad commit added in place until the Git revert syncs. If one of them is causing the incident, review and approve every resource that the rollback output marks `ignored (requires pruning)`: `--prune` deletes all of them, including any from other commits. Then repeat step 4 with `--prune` added to `argocd app rollback` and with `kubectl rollout status deployment/<service> -n <namespace>` in place of the health wait. After a pruning rollback, Argo CD releases earlier than 3.4 can report the Application as `Missing` until the Git revert merges, so the health wait would not return.
+A history rollback leaves resources that the bad commit added in place until the Git revert syncs.
+
+If one of them is causing the incident, review and approve every resource that the rollback output marks `ignored (requires pruning)`: `--prune` deletes all of them, including any from other commits. Then repeat step 4 with `--prune` added to `argocd app rollback` and with `kubectl rollout status deployment/<service> -n <namespace>` in place of the health wait. After a pruning rollback, Argo CD releases earlier than 3.4 can report the Application as `Missing` until the Git revert merges, so the health wait would not return.
 
 Run the break-glass sequence in this order:
 
@@ -960,3 +968,4 @@ With the temporary file and `set -euo pipefail`, a failed `helm template` stops 
 | `<reloader-namespace>` | Namespace where Reloader runs | `reloader` |
 | `<reloader-deployment-name>` | Reloader Deployment name | `reloader` |
 | `<reloader-sa-name>` | Expected Reloader ServiceAccount name | `reloader` |
+
