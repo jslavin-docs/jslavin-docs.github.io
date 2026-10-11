@@ -453,18 +453,24 @@ Seeding sets the initial secret value and is the only approved human write path 
 2. The administrator opens a private session with MFA. **The secret value is never typed, pasted, echoed, or interpolated into a shell.** It flows from the password manager through the input stream to AWS and appears nowhere else.
 
     !!! danger "Do not disable session controls"
-        Keep shell history and terminal recording enabled. PAM session capture is required, and step 5 relies on its audit trail. The script below keeps the value out of process arguments (`argv`) and shell history without disabling these controls.
+        Keep shell history and terminal recording enabled. PAM session capture is required, and step 5 relies on its audit trail. The script below keeps the value out of process arguments (`argv`) and shell history without disabling these controls. The one setting that must be off is the AWS CLI's optional command history (`cli_history`): when enabled, it records request parameters, including this value, on the host.
 
-3. Seed the value with the script below. It first checks the secret and stops if a value already exists, so a rerun cannot replace a value already in use. It then calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem unless the AWS CLI setting `cli_history` is enabled (it is off by default).
+3. Seed the value with the script below. Before you run it, turn off the AWS CLI's optional command history with `aws configure set cli_history disabled`. It is off by default, and the command is safe to repeat. The script first checks the secret and stops if a value already exists, so a rerun cannot replace a value already in use. It then calls `put-secret-value` to create the first AWSCURRENT version only after the password-manager CLI succeeds and returns a single-line value. The value reaches the AWS CLI through standard input, so no plaintext copy is written to the filesystem. The first check cannot stop a second seeding that starts while the first is still running, so the deployment ticket names one person or job to seed each secret, and nobody else runs the script for that secret. As a backstop, the script sends a fixed version ID (`--client-request-token`) built from the ticket and secret name, so if two seedings do overlap, Secrets Manager accepts the second write only when its value matches the first and rejects it otherwise.
 
-    Save this as `seed-secret.py`, replace the placeholders with your approved command and resource names, and run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password. Never put the actual password in the script. Sign in to the password manager before you run the script. The script captures the password manager's output, so a sign-in prompt or error message may not appear.
+    Save this as `seed-secret.py`, replace the placeholders with your approved command, resource names, and deployment ticket ID, and run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password. Never put the actual password in the script. Sign in to the password manager before you run the script. The script captures the password manager's output, so a sign-in prompt or error message may not appear.
 
     ```python
     import json
     import subprocess
     import sys
+    import uuid
 
     SECRET_ID = "nova/<service>/<secret_name>"
+    TICKET_ID = "<deployment-ticket-id>"
+
+    # A fixed version ID for this seeding. If two seedings overlap, Secrets
+    # Manager accepts the second write only when its value matches the first.
+    VERSION_ID = str(uuid.uuid5(uuid.NAMESPACE_URL, TICKET_ID + "/" + SECRET_ID))
 
     try:
         check = subprocess.run(
@@ -511,6 +517,7 @@ Seeding sets the initial secret value and is the only approved human write path 
                 "aws", "secretsmanager", "put-secret-value",
                 "--secret-id", SECRET_ID,
                 "--secret-string", "file:///dev/stdin",
+                "--client-request-token", VERSION_ID,
             ],
             input=json.dumps({"password": password}).encode("utf-8"),
         )
