@@ -138,7 +138,7 @@
   padding: 1rem;
 }
 
-.metric-card span {
+.metric-card > span {
   display: block;
   margin-bottom: .35rem;
   color: var(--md-primary-fg-color);
@@ -411,6 +411,8 @@
 .portfolio-card .card-link,
 .feature-card .card-link {
   display: inline-flex;
+  align-items: center;
+  gap: .25em;
   margin-top: .9rem;
   color: var(--md-primary-fg-color);
   font-weight: 600;
@@ -644,3 +646,52 @@ html:has(.md-content :focus-visible) .md-typeset :target { --md-scroll-margin: 1
 .md-typeset :target > .headerlink {
   color: var(--md-primary-fg-color);
 }
+
+/* Draw arrows without requesting the font's arrow-only subsets. */
+.inline-arrow {
+  display: inline-block;
+  position: relative;
+  width: .8em;
+  height: .6em;
+  vertical-align: .03em;
+}
+
+.inline-arrow::before,
+.inline-arrow::after {
+  content: "";
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.inline-arrow::before {
+  top: calc(50% - .04em);
+  left: 0;
+  width: 100%;
+  border-top: .08em solid currentColor;
+}
+
+.inline-arrow::after {
+  top: 50%;
+  right: .083em;
+  width: .4em;
+  height: .4em;
+  border-top: .08em solid currentColor;
+  border-right: .08em solid currentColor;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+/* Keep the meaning of "Weeks to days" available to screen readers. */
+.arrow-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The collapsed on-page contents box has no useful content in print. */
+@media print { .md-typeset .page-contents { display: none; } }
