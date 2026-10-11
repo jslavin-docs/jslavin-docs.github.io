@@ -50,7 +50,7 @@ jobs:
           path: site
 
   quality:
-    name: Build strict and check internal links
+    name: Build strict, check links, validate HTML
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -76,6 +76,42 @@ jobs:
 
       - name: Check internal links
         run: python scripts/check_internal_links.py site
+
+      - name: Set up Java for the HTML checker
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # The Nu HTML Checker is the engine behind validator.w3.org. The checker
+      # and the Maven plugin that fetches it are both pinned, so an update to
+      # either cannot change the result on its own.
+      - name: Fetch the Nu HTML Checker
+        run: |
+          mkdir -p "$RUNNER_TEMP/vnu"
+          cat > "$RUNNER_TEMP/vnu/pom.xml" <<'POM'
+          <project xmlns="http://maven.apache.org/POM/4.0.0">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>local</groupId>
+            <artifactId>html-check</artifactId>
+            <version>1</version>
+            <dependencies>
+              <dependency>
+                <groupId>nu.validator</groupId>
+                <artifactId>validator</artifactId>
+                <version>26.10.9</version>
+              </dependency>
+            </dependencies>
+          </project>
+          POM
+          mvn -q -B -f "$RUNNER_TEMP/vnu/pom.xml" org.apache.maven.plugins:maven-dependency-plugin:3.11.0:copy-dependencies -DoutputDirectory="$RUNNER_TEMP/vnu/lib" -DincludeScope=runtime
+
+      # Errors fail the build and block the deploy; warnings do not. Verbose
+      # output lists each file checked. The Google site-verification file is a
+      # plain token, not HTML.
+      - name: Check built pages are valid HTML
+        run: |
+          find site -name '*.html' ! -name 'google*.html' -print0 | xargs -0 java -cp "$RUNNER_TEMP/vnu/lib/*" nu.validator.client.SimpleCommandLineValidator --errors-only --no-langdetect --verbose
 
   lighthouse:
     name: Lighthouse CI advisory audit
