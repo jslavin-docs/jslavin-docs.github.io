@@ -38,7 +38,14 @@ This is the short version of a runbook: the steps an operator follows to release
     Check tools and controllers -&gt; update Git and Terraform-managed IAM/KMS metadata -&gt; open a pull request (PR) -&gt; pass CI (the automated checks) and platform review -&gt; merge to protected main -&gt; sync manually or automatically -&gt; verify health, secrets, and rollout -&gt; roll back if needed.
 
 !!! warning "Stop Checkpoints"
-    Stop if controllers are unhealthy, CI fails, a workload using secrets lacks the Reloader annotation on root metadata, an ExternalSecret is not Ready, Argo CD is not Synced/Healthy, or a check requires printing a secret value.
+    Stop if:
+
+    - Controllers are unhealthy.
+    - CI fails.
+    - A workload using secrets lacks the Reloader annotation on root metadata.
+    - An ExternalSecret is not Ready.
+    - Argo CD is not Synced/Healthy.
+    - A check requires printing a secret value.
 
 | Step | Operator Action | Evidence |
 | --- | --- | --- |
@@ -314,3 +321,4 @@ For Argo CD history rollback:
 4. Outside approved sync times, enable the incident-approved manual-sync override first. Roll back to the last known good revision, wait for health with `argocd app wait <app-name> --health`, then disable the override.
 
 5. Keep both suspended until the matching Git revert merges, then restore their prior sync policies.
+
