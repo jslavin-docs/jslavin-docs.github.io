@@ -5,7 +5,7 @@
 **Lead Technical Writer**  
 API · Cloud · Edge · IoT · GitOps · DevSecOps · Docs as Code
 
-This repository contains the source for my technical writing portfolio, built with MkDocs Material and published with GitHub Pages. It demonstrates the same Docs as Code practices I use professionally: Markdown authoring, YAML configuration, Git version control, strict build checks and link validation in CI, and GitHub Actions automation.
+This repository contains the source for my technical writing portfolio, built with MkDocs Material and published with GitHub Pages. It demonstrates the same Docs as Code practices I use professionally: Markdown authoring, YAML configuration, Git version control, GitHub Actions automation, and strict builds plus internal link and HTML checks in CI.
 
 - **Live portfolio:** https://jslavin-docs.github.io/
 - **Resume:** https://jslavin-docs.github.io/resume/
@@ -20,17 +20,17 @@ API documentation · OpenAPI · SDK documentation · Information architecture ·
 
 - **MkDocs Material** — custom theme configuration, navigation tabs, admonitions, code copy, and permalink anchors
 - **Custom CSS** — hero layout, metric cards, portfolio grid, and skill cards layered on top of the Material theme
-- **GitHub Actions CI/CD** — build, quality, and audit jobs on every push to `main` and every pull request, with deploy gated on the first two and skipped for pull requests
+- **GitHub Actions CI/CD** — a combined build-and-quality job and a separate advisory audit on every push to `main` and every pull request; deployment publishes the checked site only after the quality job passes and is skipped for pull requests
 - **GitHub Pages** — static-site publishing for a public technical writing portfolio
 - **Docs as Code workflow** — content authored in Markdown, configuration managed in YAML, and version-controlled in Git
 - **AI-retrieval artifacts** — `llms.txt`, a build-generated `llms-full.txt`, Markdown versions of every page, and an agent instruction file (`skill.md`) expose the site content to LLM-based tools via the MkDocs hook in `hooks.py`
-- **Documentation QA** — `mkdocs build --strict` and an internal link check run in CI; build warnings and failed internal link checks block the deploy
+- **Documentation QA** — `mkdocs build --strict`, an internal link check, and the pinned Nu HTML Checker run in CI; build warnings, failed internal link checks, and HTML errors block the deploy. The HTML check ignores warnings and excludes Google's verification file.
 
 ## Repository structure
 
 ```text
 jslavin-docs.github.io/
-├── .github/workflows/pages.yml   # Build, quality, audit, and deploy workflow
+├── .github/workflows/pages.yml   # Build, checks, advisory audit, and deploy workflow
 ├── .github/dependabot.yml        # Monthly grouped dependency updates
 ├── docs/                         # Markdown source files and assets
 │   ├── index.md                  # Portfolio homepage
