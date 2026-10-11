@@ -68,6 +68,43 @@ def normalize_html_labels(svg: str) -> str:
     return svg
 
 
+def pad_edge_labels(svg: str) -> str:
+    """Give connector labels 6px horizontal and 3px vertical breathing room.
+
+    Expand only the green background, leaving Mermaid's measured text boxes,
+    line breaks, label positions and connector paths intact. A sibling SVG
+    rectangle also avoids clipping the padding inside the foreignObject.
+    """
+    marker = "data-edge-label-padding"
+    pattern = (
+        r'(<g\b[^>]*\bclass="edgeLabel"[^>]*>\s*'
+        r'<g\b[^>]*\bclass="label"[^>]*>)(.*?)(</g>\s*</g>)'
+    )
+
+    def background(match: re.Match) -> str:
+        content = match[2]
+        if marker in content:
+            return match[0]
+        group = ET.fromstring('<g xmlns="http://www.w3.org/2000/svg">' + content + '</g>')
+        label = group.find('{http://www.w3.org/2000/svg}foreignObject')
+        if label is None or not ''.join(label.itertext()).strip():
+            return match[0]
+        width = float(label.attrib['width'])
+        height = float(label.attrib['height'])
+        if width <= 0 or height <= 0:
+            return match[0]
+        # The existing .edgeLabel rect rule supplies the background color.
+        # Override its half opacity so the padded edge matches the label.
+        rectangle = (
+            f'<rect {marker}="" aria-hidden="true" x="-6" y="-3" '
+            f'width="{width + 12:g}" height="{height + 6:g}" '
+            'style="opacity:1;stroke:none"/>'
+        )
+        return match[1] + rectangle + content + match[3]
+
+    return re.sub(pattern, background, svg, flags=re.DOTALL)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--puppeteer-config", type=Path)
@@ -120,6 +157,7 @@ def main() -> None:
 
     svg = re.sub(r"<svg\b([^>]*)>", describe, svg, count=1)
     svg = normalize_html_labels(svg)
+    svg = pad_edge_labels(svg)
 
     element = ET.fromstring(svg)
     view_box = [float(value) for value in element.attrib["viewBox"].split()]
