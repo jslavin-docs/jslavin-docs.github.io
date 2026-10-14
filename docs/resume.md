@@ -1,5 +1,5 @@
 ---
-description: "Resume for Jeff Slavin, a technical writer and documentation lead with experience in API, cloud, edge, IoT, and DevSecOps documentation, information architecture, Docs as Code, and AI-ready content."
+description: "Resume for Jeff Slavin, Lead Technical Writer with 10+ years across API, cloud, edge, IoT, and DevSecOps documentation, Docs as Code, and AI-ready content."
 ---
 
 # Jeff Slavin { .resume-page-title }

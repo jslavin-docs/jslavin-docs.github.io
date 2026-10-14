@@ -74,7 +74,7 @@ social:
   <a class="feature-card" href="portfolio/#api-developer-documentation">
     <span class="card-tag">OpenAPI · REST · Webhooks</span>
     <h3>API and developer documentation</h3>
-    <p>Interactive API references, query schema docs, webhook payload guides, and the OpenAPI spec descriptions used to generate SDKs.</p>
+    <p>Interactive API references, query schema docs, and webhook payload guides.</p>
     <span class="card-link">View samples <span class="inline-arrow" aria-hidden="true"></span></span>
   </a>
   <a class="feature-card" href="portfolio/#end-user-onboarding-documentation">
@@ -84,9 +84,9 @@ social:
     <span class="card-link">View sample <span class="inline-arrow" aria-hidden="true"></span></span>
   </a>
   <a class="feature-card" href="portfolio/#edge-computing-documentation">
-    <span class="card-tag">Edge · Architecture · Tutorial</span>
+    <span class="card-tag">Edge · Overview · Tutorial</span>
     <h3>Edge computing documentation</h3>
-    <p>Platform overviews, architecture guidance, and deployment tutorials for edge environments.</p>
+    <p>Platform overviews, configuration references, and deployment tutorials for edge environments.</p>
     <span class="card-link">View samples <span class="inline-arrow" aria-hidden="true"></span></span>
   </a>
 </div>

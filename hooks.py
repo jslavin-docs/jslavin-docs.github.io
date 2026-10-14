@@ -38,6 +38,8 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
 11. Marks the theme's inline icon graphics and its two logo images as
    decorative. Each sits inside a control or link that already has a name,
    so screen readers skip the drawing instead of announcing it (or "logo").
+12. Sets the footer copyright line to the year of the build, so the year
+   advances on the first deploy of each new year without an edit.
 
 Both exports are cleaned before they are written: presentation-only
 attribute lists are removed and raw HTML layout blocks are converted
@@ -55,6 +57,8 @@ import hashlib
 import json
 import re
 import shutil
+from datetime import datetime
+from datetime import timezone
 from html import escape
 from pathlib import Path
 from pathlib import PurePosixPath
@@ -94,6 +98,17 @@ HTML_BLOCK = re.compile(
 )
 # Markdown links and images with a relative destination.
 RELATIVE_LINK = re.compile(r"(!?\[[^\]]*\]\()(?!\w+:|#|/)([^)\s]+)(\))")
+
+
+def on_config(config):
+    """Stamp the footer copyright with the year of the build.
+
+    mkdocs.yml has no copyright key on purpose: this hook owns it, so the
+    year advances on the first deploy of each new year.
+    """
+    year = datetime.now(timezone.utc).year
+    config["copyright"] = f"&copy; {year} Jeff Slavin"
+    return config
 
 
 def on_page_markdown(markdown, page, config, files):

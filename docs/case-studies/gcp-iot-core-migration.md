@@ -16,7 +16,7 @@ When Google shut down Cloud IoT Core, every connected fleet had to move by a har
 
 In August 2022, Google announced it would retire Cloud IoT Core. On August 16, 2023, the service shut down: MQTT and HTTP bridges closed and Google's own docs went offline with it. Every connected fleet had to move, whether they wanted to or not.
 
-ClearBlade built ClearBlade IoT Core as a direct replacement. More than 250 Google Cloud customers ultimately migrated. That number is the company's, for the whole program. It's what the docs had to support: production fleets, a fixed external deadline, and operators forced to migrate.
+ClearBlade built ClearBlade IoT Core as a direct replacement. More than 250 Google Cloud customers ultimately migrated. That number is [the company's](https://www.clearblade.com/press/clearblade-unleashes-scalability-in-iot-and-ai-with-google-cloud), for the whole program. It's what the docs had to support: production fleets, a fixed external deadline, and operators forced to migrate.
 
 ## The constraint
 

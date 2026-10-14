@@ -4,7 +4,7 @@ description: "Selected technical writing samples by Jeff Slavin covering GitOps,
 
 # Portfolio { .portfolio-page-title }
 
-A focused set of technical writing samples covering GitOps, DevSecOps, APIs, developer onboarding, IoT platform migration, and edge computing. Each sample highlights the technical scope, intended audience, and business context. ClearBlade samples link to the company's live site, which may have changed since they were written.
+A focused set of technical writing samples covering GitOps, DevSecOps, APIs, developer onboarding, IoT platform migration, and edge computing. Each sample highlights the technical scope, intended audience, and business context. The ClearBlade samples link to the company's live site, which may have changed since they were written.
 
 ## GitOps & DevSecOps Documentation
 
@@ -19,7 +19,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="../writing-samples/novadeploy-gitops-admin-guide-full-version/">
     <span class="card-tag">Amazon EKS · IRSA · KMS · ESO · Reloader</span>
     <h3>NovaDeploy GitOps Administration Guide – Full Runbook</h3>
-    <p>The complete fictional operator runbook: SecretStore and ESO setup, as well as Terraform patterns for IAM, KMS, and Secrets Manager. Includes a rotation readiness gate, CI guardrails, verification commands, break-glass rollback, and an evidence checklist. Start with the portfolio cut for a shorter read.</p>
+    <p>The complete fictional operator runbook: SecretStore and External Secrets Operator (ESO) setup, as well as Terraform patterns for IAM, KMS, and Secrets Manager. Includes a rotation readiness gate, CI guardrails, verification commands, break-glass rollback (an approved emergency procedure), and an evidence checklist. Start with the portfolio cut for a shorter read.</p>
     <span class="card-link">Read sample <span class="inline-arrow" aria-hidden="true"></span></span>
   </a>
 </div>
@@ -65,8 +65,8 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
 
 <div class="portfolio-grid">
   <a class="portfolio-card" href="https://docs.clearblade.com/iotenterprise/edge" target="_blank" rel="noopener">
-    <span class="card-tag">Architecture · Platform overview</span>
-    <h3>Edge Computing Platform Overview & Architecture</h3>
+    <span class="card-tag">Platform overview · Configuration</span>
+    <h3>Edge Computing Platform Overview & Configuration</h3>
     <p>Developed ClearBlade Edge documentation for installation, configuration, and synchronization, helping teams independently deploy and manage edge environments.</p>
     <span class="card-link">Read sample <span class="inline-arrow" aria-hidden="true"></span></span>
   </a>

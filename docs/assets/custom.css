@@ -695,3 +695,6 @@ html:has(.md-content :focus-visible) .md-typeset :target { --md-scroll-margin: 1
 
 /* The collapsed on-page contents box has no useful content in print. */
 @media print { .md-typeset .page-contents { display: none; } }
+
+/* The PDF button has no purpose on paper. */
+@media print { .md-typeset .md-button { display: none; } }

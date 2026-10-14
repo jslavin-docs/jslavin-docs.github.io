@@ -14,7 +14,7 @@ This repository contains the source for my technical writing portfolio, built wi
 
 ## Focus areas
 
-API documentation · OpenAPI · SDK documentation · Information architecture · Docs as Code · Cloud and edge computing · IoT · Kubernetes · GitOps · Argo CD · DevSecOps · Prometheus
+API documentation · OpenAPI · SDK documentation · Information architecture · Docs as Code · AI-ready documentation (llms.txt, skill.md) · Cloud and edge computing · IoT · Kubernetes · GitOps · Argo CD · DevSecOps · Prometheus
 
 ## What this repo demonstrates
 
@@ -23,8 +23,8 @@ API documentation · OpenAPI · SDK documentation · Information architecture ·
 - **GitHub Actions CI/CD** — a combined build-and-quality job and a separate advisory audit on every push to `main` and every pull request; deployment publishes the checked site only after the quality job passes and is skipped for pull requests
 - **GitHub Pages** — static-site publishing for a public technical writing portfolio
 - **Docs as Code workflow** — content authored in Markdown, configuration managed in YAML, and version-controlled in Git
-- **AI-retrieval artifacts** — `llms.txt`, a build-generated `llms-full.txt`, Markdown versions of every page, and an agent instruction file (`skill.md`) expose the site content to LLM-based tools via the MkDocs hook in `hooks.py`
-- **Documentation QA** — `mkdocs build --strict`, an internal link check, and the pinned Nu HTML Checker run in CI; build warnings, failed internal link checks, and HTML errors block the deploy. The HTML check ignores warnings and excludes Google's verification file.
+- **AI-retrieval artifacts** — `llms.txt` (a hand-written index that MkDocs copies as is) and, generated on every build by the MkDocs hook in `hooks.py`, `llms-full.txt`, Markdown versions of every page, and a raw copy of the agent instruction file (`skill.md`) expose the site content to LLM-based tools
+- **Documentation QA** — `mkdocs build --strict`, an internal link check, and the pinned Nu HTML Checker run in CI; build warnings, failed internal link checks, and HTML errors block the deploy. The HTML check ignores warnings and excludes Google's verification file. A Lighthouse audit also runs on every push, but it is advisory only and never blocks the deploy.
 
 ## Repository structure
 
@@ -101,6 +101,7 @@ Check the site before publishing:
 
 ```bash
 mkdocs build --strict
+python scripts/check_internal_links.py site
 ```
 
 ## Update the NovaDeploy diagram
