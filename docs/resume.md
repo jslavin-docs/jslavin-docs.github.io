@@ -13,7 +13,7 @@ Miami, FL · [jslavin.docs@gmail.com](mailto:jslavin.docs@gmail.com) · [LinkedI
 
 ## Summary
 
-Technical writer and documentation lead with 10+ years across API, cloud, edge, IoT, and DevSecOps. Owns documentation end to end for users and developers, spanning information architecture, Docs as Code, and content structured for self-service and AI retrieval. Cuts support tickets by 30% and takes partner integrations from weeks to days.
+Technical writer and documentation lead with 10+ years across API, cloud, edge, IoT, and DevSecOps. Owns user and developer documentation end to end, spanning information architecture, Docs as Code, and content structured for self-service and AI retrieval. Cuts support tickets by 30% and takes partner integrations from weeks to days.
 
 ---
 
@@ -24,11 +24,11 @@ Technical writer and documentation lead with 10+ years across API, cloud, edge, 
 **Senior Technical Writer**  
 Nov 2024 – Present · Remote
 
-- Author design documentation for a secure AWS edge platform (Kubernetes, Argo CD, GitOps) whose rollout cut retail client hardware costs by 40%
+- Author design documentation for the Artisan Edge Platform on AWS (Kubernetes, Argo CD, GitOps), whose rollout cut retail client hardware costs by 40%
 - Create process flow and network topology diagrams from working sessions with solutions architects and developers, shortening architecture review cycles by 25%
 - Codify triage, diagnostics, and escalation for 65 Prometheus alerts in the DevSecOps runbook used by on-call engineers
 - Write the 160-page user guide for managing clusters, nodes, namespaces, workloads, and applications across distributed edge locations
-- Document the access control model, secrets management, and certificate handling across user and machine-to-machine authentication
+- Document the IAM model, secrets management, and certificate handling for machine-to-machine and user authentication
 
 ### ClearBlade
 
@@ -37,8 +37,8 @@ Oct 2022 – Nov 2024 · Remote
 
 - Owned three product documentation sets end to end, standardizing topic-type architecture and templates on the developer platforms
 - Implemented a Git-based Docs as Code workflow with CI/CD publishing, maintaining SDK and library documentation across 23 repositories
-- Documented the OpenAPI specification behind the interactive API reference and SDK generation, reducing partner integration time from weeks to days
-- Authored the migration guides that moved 250+ enterprises off GCP IoT Core onto ClearBlade, cutting support tickets by 30%
+- Wrote the OpenAPI spec descriptions used to generate the interactive API reference and SDKs, reducing partner integration time from weeks to days
+- Authored the migration guides for 250+ GCP IoT Core customers who moved to ClearBlade, cutting support tickets by 30%
 - Rebuilt Confluence content into a self-service portal in Scroll Sites, with a new taxonomy that raised search success rates by 60%
 - Restructured Confluence topics to be self-contained and consistently labeled, then revised them to improve Rovo's RAG-based AI answers across question types
 - Advised the technical support organization on end-user documentation practices, shaping how the team delivered guidance to customers
@@ -59,7 +59,7 @@ Feb 2017 – Nov 2017 · Delray Beach, FL
 
 - Delivered a mobile-first knowledge base for a workforce management SaaS platform, covering field technician workflows, scheduling, and client onboarding
 
-### AT&T / Randstad Technologies
+### AT&T (Randstad Technologies)
 
 **Technical Writer**  
 Jun 2014 – Dec 2016 · Remote
@@ -72,11 +72,15 @@ Jun 2014 – Dec 2016 · Remote
 
 ### Documentation Strategy
 
-Content Strategy · Information Architecture · Taxonomy and Metadata · Style Guide Development · AI-Ready Content Structuring
+Content Strategy · Information Architecture · Taxonomy and Metadata · Style Guide Development
+
+### AI-Ready Documentation
+
+RAG Content Structuring · Prompt Engineering · LLM-Ready Docs (llms.txt) · Agent Skills (skill.md) · Codex · Claude Code · GitHub Copilot
 
 ### Deliverables
 
-REST API and SDK Documentation · Knowledge Bases · Quick Starts and Tutorials · Migration Guides · Administrator and User Guides · Runbooks
+REST API Reference and SDK Documentation · Knowledge Bases · Quick Starts and Tutorials · Migration Guides · Administrator and User Guides · Runbooks
 
 ### Cloud and Infrastructure
 
@@ -90,13 +94,9 @@ MkDocs · GitBook · Confluence · Scroll Sites · Zendesk · Mermaid · Lucidch
 
 Git · GitHub Actions · Bitbucket · Jenkins · Jira · Postman · OpenAPI · Swagger · Python · Bash · YAML · JSON · Markdown
 
-### Technical Domains
-
-Cloud and Edge Computing · IoT · API Integration · Cybersecurity · IAM · Zero Trust Architecture · Cloud Networking · GenAI · RAG
-
 ### Methodologies
 
-Docs as Code · GitOps · DevOps · DevSecOps · CI/CD · IaC · SRE · Agile/Scrum · ITIL
+Docs as Code · GitOps · DevOps · DevSecOps · CI/CD · Agile/Scrum
 
 ---
 

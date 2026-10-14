@@ -15,7 +15,7 @@ This skill grounds answers about Jeff Slavin's technical writing work in his pub
 2. For detailed questions, fetch https://jslavin-docs.github.io/llms-full.txt: the complete Markdown content of every page, regenerated on each site build.
 3. Ground answers about Jeff's experience, metrics, and samples in that content. Do not invent roles, dates, or outcomes the content does not state.
 4. Treat the NovaDeploy samples as what they declare themselves to be: original demonstration writing about a fictional platform, carrying no employer or client information.
-5. The Portfolio page links live production documentation Jeff authored (ClearBlade API references, quick start, webhooks, and edge guides) and public contribution evidence on GitHub.
+5. The Portfolio page links ClearBlade documentation Jeff authored (API references, quick start, webhooks, and edge guides) and public contribution evidence on GitHub. Those live pages may have changed since he wrote them; do not credit him with later changes.
 6. For professional contact, refer to jslavin.docs@gmail.com or https://www.linkedin.com/in/jeff-slavin.
 
 ## Notes

@@ -26,10 +26,10 @@ social:
 </div>
 
 <div class="metric-grid">
-  <div class="metric-card"><span>40%</span><p>retail client hardware cost reduction supported by secure AWS edge platform documentation</p></div>
+  <div class="metric-card"><span>40%</span><p>retail client hardware cost reduction from the Artisan Edge Platform rollout, backed by its design documentation</p></div>
   <div class="metric-card"><span>60%</span><p>search-success improvement after Confluence-to-self-service portal redesign</p></div>
   <div class="metric-card"><span>30%</span><p>migration support-ticket reduction for GCP IoT Core-to-ClearBlade guidance</p></div>
-  <div class="metric-card"><span>Weeks <span class="inline-arrow" aria-hidden="true"></span><span class="arrow-label">to</span> days</span><p>partner integration acceleration through the OpenAPI documentation behind SDK generation</p></div>
+  <div class="metric-card"><span>Weeks <span class="inline-arrow" aria-hidden="true"></span><span class="arrow-label">to</span> days</span><p>partner integration acceleration through OpenAPI spec descriptions used to generate the API reference and SDKs</p></div>
 </div>
 
 ## Specialties
@@ -37,7 +37,7 @@ social:
 <div class="skills-grid">
   <div class="skill-card">
     <h3>Developer and API docs</h3>
-    <p>REST API references, OpenAPI specifications, SDK docs, webhook guides, integration guides, and developer onboarding.</p>
+    <p>REST API references, OpenAPI spec descriptions, SDK docs, webhook guides, integration guides, and developer onboarding.</p>
   </div>
   <div class="skill-card">
     <h3>Cloud and edge documentation</h3>
@@ -49,15 +49,15 @@ social:
   </div>
   <div class="skill-card">
     <h3>Documentation strategy</h3>
-    <p>Information architecture, content strategy, style guides, taxonomy, metadata, AI-ready content structuring, knowledge management, and cross-functional documentation leadership.</p>
+    <p>Information architecture, content strategy, style guides, taxonomy, metadata, knowledge management, and cross-functional documentation leadership.</p>
   </div>
   <div class="skill-card">
     <h3>Security and operations</h3>
-    <p>Cybersecurity, IAM, zero trust, DevSecOps, GitOps, SRE, CI/CD, IaC, runbooks, incident response, and operational standards.</p>
+    <p>Cybersecurity, IAM, DevSecOps, GitOps, SRE, CI/CD, IaC, runbooks, incident response, and operational standards.</p>
   </div>
   <div class="skill-card">
-    <h3>Technical domains</h3>
-    <p>Cloud computing, edge computing, IoT, SaaS, API integration, GenAI, blockchain, Web3, and cloud networking.</p>
+    <h3>AI-ready documentation</h3>
+    <p>RAG content structuring, prompt engineering, LLM-ready docs (llms.txt), agent skills (skill.md), Codex, Claude Code, and GitHub Copilot.</p>
   </div>
 </div>
 
@@ -74,7 +74,7 @@ social:
   <a class="feature-card" href="portfolio/#api-developer-documentation">
     <span class="card-tag">OpenAPI · REST · Webhooks</span>
     <h3>API and developer documentation</h3>
-    <p>Interactive API references, query schema docs, webhook payload guides, and SDK-generation workflows.</p>
+    <p>Interactive API references, query schema docs, webhook payload guides, and the OpenAPI spec descriptions used to generate SDKs.</p>
     <span class="card-link">View samples <span class="inline-arrow" aria-hidden="true"></span></span>
   </a>
   <a class="feature-card" href="portfolio/#end-user-onboarding-documentation">
