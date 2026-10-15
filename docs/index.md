@@ -26,10 +26,10 @@ social:
 </div>
 
 <div class="metric-grid">
-  <div class="metric-card"><span>40%</span><p>retail client hardware cost reduction from the Artisan Edge Platform rollout, backed by its design documentation</p></div>
+  <div class="metric-card"><span>40%</span><p>retail client hardware cost reduction from the Artisan Edge Platform, backed by its design docs</p></div>
   <div class="metric-card"><span>60%</span><p>search-success improvement after Confluence-to-self-service portal redesign</p></div>
   <div class="metric-card"><span>30%</span><p>migration support-ticket reduction for GCP IoT Core-to-ClearBlade guidance</p></div>
-  <div class="metric-card"><span>Weeks <span class="inline-arrow" aria-hidden="true"></span><span class="arrow-label">to</span> days</span><p>partner integration acceleration through OpenAPI spec descriptions used to generate the API reference and SDKs</p></div>
+  <div class="metric-card"><span>Weeks <span class="inline-arrow" aria-hidden="true"></span><span class="arrow-label">to</span> days</span><p>partner integration time, via OpenAPI spec descriptions used to generate SDKs</p></div>
 </div>
 
 ## Specialties
