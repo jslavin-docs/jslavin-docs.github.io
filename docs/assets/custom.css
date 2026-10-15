@@ -144,6 +144,8 @@
   color: var(--md-primary-fg-color);
   font-size: 1.45rem;
   font-weight: 850;
+  /* Tight enough that "Weeks -> days" reads as one heading when it wraps. */
+  line-height: 1.15;
   letter-spacing: -.04em;
 }
 
