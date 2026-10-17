@@ -66,7 +66,7 @@ These production safety rules apply throughout the guide.
 | IRSA separation | Two IAM roles for service accounts (IRSA) per service: workload ServiceAccount has non-secret AWS permissions only; dedicated ESO reader ServiceAccount assumes `nova-<service>-eso-read` | Only ESO reads AWS Secrets Manager for service-scoped paths. |
 | Namespace-scoped SecretStore | ExternalSecret uses `secretStoreRef.kind: SecretStore` in the workload namespace | ClusterSecretStore for app secrets requires an approved platform exception. |
 | Reloader compatibility | Root workload metadata has `reloader.stakater.com/auto: "true"`; the Application sets `ignoreDifferences` for the Reloader annotation and `RespectIgnoreDifferences=true` | Reloader patches pod templates without Argo CD immediately removing its annotation. |
-| Rotation gate | Keep `var.rotation_enabled` false until KMS policy, Lambda role, ESO readiness, Reloader role-based access control (RBAC), and mount checks pass | Verify every dependency in staging and obtain production approval before enabling rotation. |
+| Rotation gate | Keep `var.rotation_enabled` false until KMS policy, Lambda role, ESO readiness, Reloader role-based access control (RBAC), and mount checks pass | Every dependency is verified in staging and production approval is obtained before rotation is enabled. |
 
 ### 2.1 Rotation Readiness Gate
 
@@ -173,7 +173,7 @@ python3 -c "import yaml; print('PyYAML available')"
 
 ### 4.2 Cluster Health Check
 
-Run before every release cycle; all controllers must be healthy before sync, rollback, or rotation. Save the block as a script and run with `bash`. Pasting it into a live shell lets `set -e` and `exit 1` close the session on the first failed check.
+Run before every release cycle; all controllers must be healthy before sync, rollback, or rotation. Save the block as a script and run with `bash`. If you paste the block into a live shell, `set -e` and `exit 1` close the session on the first failed check.
 
 The RBAC checks use `kubectl auth can-i --as` to test controller ServiceAccount permissions. Your operator or CI identity must be authorized to impersonate those accounts; most production operators should lack broad impersonation rights. Without permission, have a platform administrator or approved CI identity run the block and attach non-secret results to the deployment ticket.
 
@@ -632,7 +632,7 @@ The AppProject defines sync windows. Its matching `allow` window blocks automate
 | --- | --- | --- |
 | Monday-Friday 09:00-17:00 UTC; matching allow window active | Routine automated or manual sync permitted after PR approval. | Sync, then complete Section 8 verification. |
 | All other times; no matching allow window active | Routine sync blocked, including Monday-Thursday overnight. | Wait for the next allow window unless an approved incident requires manual override. |
-| Approved emergency manual override | Temporarily enable `manualSync` on the matching allow window. | Enable by window ID, manually sync once, verify, and immediately disable the override. |
+| Approved emergency manual override | `manualSync` is temporarily enabled on the matching allow window. | Enable by window ID, manually sync once, verify, and immediately disable the override. |
 
 ## 8. Deployment Verification
 
