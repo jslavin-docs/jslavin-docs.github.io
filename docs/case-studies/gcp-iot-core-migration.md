@@ -10,19 +10,19 @@ social:
 
 *Lead Technical Writer, ClearBlade (Oct 2022 – Nov 2024)*
 
-When Google shut down Cloud IoT Core, every connected fleet had to move by a hard deadline. I wrote the quick start that became the front door to the replacement, designed so the whole path is proven on a sample device before anyone trusts a migration reported as complete.
+I wrote ClearBlade IoT Core's quick start to help customers verify the full migration path on a sample device before moving their fleets.
 
 ## The problem
 
-In August 2022, Google announced it would retire Cloud IoT Core. On August 16, 2023, the service shut down: MQTT and HTTP bridges closed and Google's own docs went offline with it. Every connected fleet had to move, whether they wanted to or not.
+Google announced Cloud IoT Core's retirement in August 2022 and shut it down on August 16, 2023, closing its MQTT and HTTP bridges and taking its documentation offline. Production fleets faced a fixed migration deadline.
 
-ClearBlade built ClearBlade IoT Core as a direct replacement. More than 250 Google Cloud customers ultimately migrated. That number is [the company's](https://www.clearblade.com/press/clearblade-unleashes-scalability-in-iot-and-ai-with-google-cloud), for the whole program. It's what the docs had to support: production fleets, a fixed external deadline, and operators forced to migrate.
+ClearBlade IoT Core was a direct replacement. [ClearBlade reports](https://www.clearblade.com/press/clearblade-unleashes-scalability-in-iot-and-ai-with-google-cloud) that more than 250 Google Cloud customers migrated across the program.
 
 ## The constraint
 
-The product goal was to minimize customer changes. Customers keep their Google Cloud project, their Pub/Sub topics (Google's message pipeline), and their device credentials. The device-side change is pointing to ClearBlade's MQTT endpoint (MQTT is the messaging protocol used by the devices).
+To minimize customer changes, ClearBlade lets customers keep their Google Cloud project, Pub/Sub topics (Google's message pipeline), and device credentials. The device-side change is switching to ClearBlade's MQTT endpoint (MQTT is the devices' messaging protocol).
 
-That dictates the onboarding order: provisioning runs through Google Cloud Marketplace, a GCP service account authorizes the connection, and Pub/Sub permissions let telemetry flow. The guide has to start in GCP because that's how the product works. I also called out that the temporary IAM permissions role used for migration could be removed when done.
+The guide therefore starts in GCP: provision through Google Cloud Marketplace, authorize the connection with a service account, and grant Pub/Sub permissions for telemetry.
 
 ## When migrations only look complete
 
@@ -32,19 +32,20 @@ In a forced migration, the dangerous failure is silent success. A migration tool
 * a credential is expired or mismatched
 * Pub/Sub wiring was never verified
 
-The fleet looks migrated and isn't. This happened: a user of the open-source migration tool [publicly reported](https://github.com/ClearBlade/clearblade-iot-core-migration/issues/2) a run that completed against an empty registry and did nothing, and asked for the docs to address it.
+A user of the open-source migration tool [reported a real example](https://github.com/ClearBlade/clearblade-iot-core-migration/issues/2): a run completed against an empty registry, did nothing, and prompted a request for clearer documentation.
 
 ## What I wrote
 
-I authored the step-by-step quick start that is the front door to ClearBlade IoT Core. I built in code samples and live telemetry testing. The core steps follow the Google quick start customers already knew:
+I built in code samples and live telemetry testing. The steps follow the Google quick start customers already knew:
 
-* **Create the registry first** so devices can't migrate into a void
-* **Generate the device keypair in-flow** so you don't assume it exists
-* **Make Pub/Sub wiring explicit** so it isn't inherited invisibly from the old service
-* **End on proof, not config** so the guide is done when you see the sample device's messages arrive in Pub/Sub, not when a command returns success
+* **Create the registry first** so devices have a destination
+* **Generate the device keypair** rather than assume it exists
+* **Make Pub/Sub wiring explicit** rather than assume the old service's setup carries over
+* **End on proof, not config**: finish when the sample device's messages arrive in Pub/Sub, not when a command reports success
 
-Each step is aimed at a specific way a migration could look finished without being finished: you set that piece up and see it work on a sample device before the fleet moves.
+I also explained that customers could remove the temporary IAM role after migration.
 
 ## Result
 
-The [quick start](https://docs.clearblade.com/iotcore/quick-start) remains the published entry point. It's one page in a larger set of quick starts, how-tos, reference, and migration tooling that supported 250+ customers off a discontinued service. The migration guides in that set cut support tickets by 30%.
+The [quick start](https://docs.clearblade.com/iotcore/quick-start) remains the published entry point, part of the quick starts, how-tos, reference, and migration tooling that supported the program. The migration guides in that set cut support tickets by 30%.
+
