@@ -49,7 +49,7 @@ Use this workflow for non-emergency production deployments.
 | 6 | Close or recover | Close only after Synced/Healthy, successful smoke tests, and recorded non-secret evidence. | Default to Git revert; use Argo CD history only for approved service-level agreement (SLA) emergencies. |
 
 !!! info "Secret Handling Rule"
-    No plaintext secrets in Git, ConfigMaps, literal environment variables, Terraform state, PRs, logs, chats, or tickets. AWS Secrets Manager stores values; ESO syncs them into Kubernetes Secret objects.
+    AWS Secrets Manager stores values; ESO syncs them into Kubernetes Secret objects at runtime. Never commit, paste, or type a plaintext secret value into any file, manifest, shell, or ticket.
 
 ## 2. Deployment Guardrails
 

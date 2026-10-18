@@ -228,7 +228,7 @@ For the disposable mount-check pod and Reloader confirmation commands, see [Sect
 
 | Check | Pass Criteria | Forbidden Evidence |
 | --- | --- | --- |
-| Argo CD state | Synced / Healthy | Manual kubectl patch not represented in Git |
+| Argo CD state | Synced / Healthy | None |
 | ExternalSecret | Ready=True and SecretSynced reason | Secret value output |
 | Kubernetes Secret | Object exists; expected key names are present | Decoded data or base64 payload |
 | Mount check | Disposable pod prints only secret-mounted | cat/print of mounted file content |
