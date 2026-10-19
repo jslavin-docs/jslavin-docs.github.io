@@ -4,7 +4,7 @@ description: "Selected technical writing samples by Jeff Slavin covering GitOps,
 
 # Portfolio { .portfolio-page-title }
 
-A focused set of technical writing samples covering GitOps, DevSecOps, APIs, developer onboarding, IoT platform migration, and edge computing. Each sample highlights the technical scope, intended audience, and business context. The ClearBlade samples link to the company's live site, which may have changed since they were written.
+Selected technical writing samples covering GitOps, DevSecOps, APIs, developer onboarding, IoT platform migration, and edge computing. The ClearBlade samples link to the company's live site, which may have changed since they were written.
 
 ## GitOps & DevSecOps Documentation
 
@@ -44,7 +44,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="https://docs.clearblade.com/iotenterprise/webhooks" target="_blank" rel="noopener">
     <span class="card-tag">Webhooks · Payloads · cURL</span>
     <h3>Webhooks Configuration & Payload Guide</h3>
-    <p>Created webhook documentation covering authentication methods, cURL examples, JSON payload structures, path wildcards, and REST API management for programmatic webhook configuration.</p>
+    <p>Created webhook documentation covering authentication methods, cURL examples, JSON payload structures, path wildcards, and programmatic webhook configuration via the REST API.</p>
     <span class="card-link">Read sample <span class="inline-arrow" aria-hidden="true"></span></span>
   </a>
 </div>
@@ -74,7 +74,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
   <a class="portfolio-card" href="https://docs.clearblade.com/iotenterprise/edge-tutorial" target="_blank" rel="noopener">
     <span class="card-tag">Hands-on tutorial · Deployment</span>
     <h3>Hands-On Edge Deployment Tutorial</h3>
-    <p>Created a hands-on tutorial for deploying, installing, starting, and upgrading ClearBlade IoT Enterprise edge instances, from initial setup through operation.</p>
+    <p>Created a tutorial for deploying, installing, starting, remotely accessing, and upgrading ClearBlade IoT Enterprise edge instances.</p>
     <span class="card-link">Read sample <span class="inline-arrow" aria-hidden="true"></span></span>
   </a>
 </div>
@@ -99,7 +99,7 @@ A focused set of technical writing samples covering GitOps, DevSecOps, APIs, dev
 
 ## Built for AI Retrieval
 
-The site has machine-readable files so AI assistants can give accurate answers about this work:
+Machine-readable files help AI assistants give accurate answers about this work:
 
 - **[skill.md](https://jslavin-docs.github.io/skill.md)** — an instruction file that keeps AI answers grounded in the published content.
 - **[llms.txt](https://jslavin-docs.github.io/llms.txt)** — index of the site's pages.
