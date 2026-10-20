@@ -11,7 +11,7 @@ social:
 *Deploying Services to Amazon EKS with Argo CD*  
 Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 
-This portfolio overview shows how to release services, refresh secrets (such as passwords) safely, and recover from failed releases.
+This portfolio overview shows how to deploy services, safely refresh secrets such as passwords, and recover from failed releases.
 
 [Read the full runbook.](novadeploy-gitops-admin-guide-full-version.md)
 
@@ -168,9 +168,9 @@ Argo CD watches protected `main`; self-healing corrects drift. Sync windows bloc
 The cluster baseline pre-creates production namespaces; service Applications do not rely on `CreateNamespace=true`.
 
 !!! warning "Auto-Prune Boundary"
-    Automatic pruning deletes resources removed from Git. Each deletion requires a PR showing the removal, passing CI, platform approval, and merge through protected `main`.
+    Automatic pruning deletes resources removed from Git. Each deletion requires a PR that shows the removal, passes CI, receives platform approval, and is merged into protected `main`.
 
-    Enable `prune: true` only within the production AppProject and sync windows. Otherwise, a bad merge, wrong path, or unauthorized destination can trigger automatic deletion.
+    Enable `prune: true` only when the production AppProject and sync windows constrain the Application. Otherwise, a bad merge, wrong path, or unauthorized destination can trigger automatic deletion.
 
 Set `ignoreDifferences` and `RespectIgnoreDifferences=true` to ignore the Reloader-managed field during Argo CD comparison and sync.
 
@@ -208,7 +208,7 @@ syncPolicy:
 
 ## 6. Verification Pattern
 
-After every sync, run the checks below. Never decode, print, paste, or include secret values in tickets.
+After every sync, run the checks below. Never decode, print, or paste secret values. Keep them out of tickets.
 
 ```bash
 argocd app get <app-name> --refresh
@@ -289,7 +289,7 @@ See the [ServiceAccount, SecretStore, IAM, and KMS examples](novadeploy-gitops-a
 | Bad image tag promoted | Git revert | Revert the image-bump commit, pass CI, merge, then sync or wait for automation. |
 | Wrong Helm values or Application manifest | Git revert | Revert the configuration change. |
 | Application unreachable and service-level agreement (SLA) at risk | Argo CD history rollback | Use only if Argo CD and the Kubernetes API are reachable and Git revert cannot meet the SLA. Follow the break-glass sequence below. |
-| GitHub or CI outage blocks revert | Argo CD history rollback | Restore the last-good revision while Git or CI is unavailable; record non-secret evidence. Follow the break-glass sequence below. |
+| GitHub or CI outage blocks revert | Argo CD history rollback | Restore the last-good revision while GitHub or CI is unavailable; record non-secret evidence. Follow the break-glass sequence below. |
 | Secret value misconfiguration | Secrets Manager rollback + ESO re-sync | Roll back through the approved secret process. Use Git revert only for SecretStore, ExternalSecret, IAM, KMS, or rotation-config changes. |
 | Cluster unreachable | Infrastructure troubleshooting | Do not use Argo CD. Troubleshoot EKS control plane, networking, IAM, and node health first. |
 

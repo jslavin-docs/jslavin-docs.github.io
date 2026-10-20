@@ -11,7 +11,7 @@ social:
 *Deploying Services to Amazon EKS with Argo CD*  
 Version 1.0 | Status: Full runbook | Written by: Jeff Slavin
 
-Deploy and recover NovaDeploy services on Amazon Elastic Kubernetes Service (EKS) with Argo CD.
+Use this runbook to deploy NovaDeploy services, manage secrets safely, and recover from failed releases.
 
 [Read the portfolio cut.](novadeploy-gitops-admin-guide-portfolio-cut.md)
 
@@ -19,7 +19,7 @@ Deploy and recover NovaDeploy services on Amazon Elastic Kubernetes Service (EKS
     NovaDeploy is a fictional portfolio platform. This sample contains no proprietary employer, client, or production information.
 
 !!! info "Scope and Audience"
-    **Scope:** GitOps, AWS Identity and Access Management (IAM), AWS Key Management Service (KMS), Secrets Manager, External Secrets Operator (ESO), Reloader, verification, and rollback. Excludes application-code changes, broader incident response, and service-specific business logic.
+    **Scope:** GitOps on Amazon Elastic Kubernetes Service (EKS), AWS Identity and Access Management (IAM), AWS Key Management Service (KMS), Secrets Manager, External Secrets Operator (ESO), Reloader, verification, and rollback. Excludes application-code changes, broader incident response, and service-specific business logic.
 
     **Audience:** Platform engineers, DevOps/SRE operators, cloud engineers, and documentation reviewers of GitOps-managed Kubernetes services.
 
@@ -46,7 +46,7 @@ Use this workflow for non-emergency production deployments.
 | 3 | Open PR | Pass automated CI checks: lint, helm template, kubeconform, secret scan, and Reloader annotation guardrail. | Stop if any secret-consuming workload lacks the root Reloader annotation. |
 | 4 | Merge to main | Merge after approval; Argo CD watches main and reconciles the application. | No direct pushes or kubectl edits. |
 | 5 | Sync and verify | Wait for automated sync or run `argocd app sync <app-name>`; then run health, smoke, and secret-mount checks. | Do not use `--force` for normal deployment hotfixes. |
-| 6 | Close or recover | Close only after Synced/Healthy, successful smoke tests, and recorded non-secret evidence. | Default to Git revert; use Argo CD history only for approved service-level agreement (SLA) emergencies. |
+| 6 | Close or recover | Close only when the application is Synced/Healthy, smoke tests pass, and non-secret evidence is recorded. | Default to Git revert; use Argo CD history only for approved service-level agreement (SLA) emergencies. |
 
 !!! info "Secret Handling Rule"
     AWS Secrets Manager stores values; ESO syncs them into Kubernetes Secret objects at runtime. Never commit, paste, or type plaintext secret values into files, manifests, or shells. Keep all secret values out of Git, PRs, ConfigMaps, literal environment variables, Terraform state, logs, chats, and tickets.
@@ -62,7 +62,7 @@ Apply these rules throughout the guide.
 | No plaintext secrets | Secret scan, PR review, and no `aws_secretsmanager_secret_version` for production values | Follow the Secret Handling Rule in Section 1. |
 | IRSA separation | Two IAM roles for service accounts (IRSA) per service: workload ServiceAccount has non-secret AWS permissions only; dedicated ESO reader ServiceAccount assumes `nova-<service>-eso-read` | Only ESO reads AWS Secrets Manager for service-scoped paths. |
 | Namespace-scoped SecretStore | ExternalSecret uses `secretStoreRef.kind: SecretStore` in the workload namespace | ClusterSecretStore for app secrets requires an approved platform exception. |
-| Reloader compatibility | Root workload metadata has `reloader.stakater.com/auto: "true"`; the Application sets `ignoreDifferences` for the Reloader annotation and `RespectIgnoreDifferences=true` | Reloader patches pod templates without Argo CD immediately removing its annotation. |
+| Reloader compatibility | Root workload metadata has `reloader.stakater.com/auto: "true"`; the Application sets `RespectIgnoreDifferences=true` and `ignoreDifferences` for the `reloader.stakater.com/last-reloaded-from` annotation | Reloader patches pod templates without Argo CD immediately removing its annotation. |
 | Rotation gate | Keep `var.rotation_enabled` false until KMS policy, Lambda role, ESO readiness, Reloader role-based access control (RBAC), and mount checks pass | Verify every dependency in staging and obtain production approval before enabling rotation. |
 
 ### 2.1 Rotation Readiness Gate
@@ -71,7 +71,7 @@ Enable production rotation only after all staging checks pass and the change rec
 
 - Run the cluster health check in Section 4.2.
 - Confirm ESO can reconcile the target ExternalSecret and create/update the Kubernetes Secret.
-- Confirm the KMS key policy permits the ESO reader role and the rotation Lambda execution role when rotation is enabled.
+- Confirm the KMS key policy permits the ESO reader role and, when rotation is enabled, the rotation Lambda execution role.
 - Confirm Reloader can get/list/watch Secrets and ConfigMaps and patch workloads in the workload namespace.
 - Confirm every secret-consuming Deployment, StatefulSet, or DaemonSet has `reloader.stakater.com/auto: "true"` on root workload metadata.
 - Confirm the Argo CD Application ignores Reloader last-reloaded annotations and sets `RespectIgnoreDifferences=true`.
@@ -168,7 +168,7 @@ python3 -c "import yaml; print('PyYAML available')"
 
 ### 4.2 Cluster Health Check
 
-Run before every release cycle; all controllers must be healthy before sync, rollback, or rotation. Save as a script and run with `bash`. If you paste the block into a live shell, `set -e` and `exit 1` close the session on the first failed check.
+Run before every release cycle; all controllers must be healthy before sync, rollback, or rotation. Save this block as a script and run it with `bash`. If you paste the block into a live shell, `set -e` and `exit 1` close the session on the first failed check.
 
 The RBAC checks test controller ServiceAccount permissions with `kubectl auth can-i --as`, which requires permission to impersonate those accounts. Most production operators should lack broad impersonation rights. Without permission, have a platform administrator or approved CI identity run the block and attach non-secret results to the deployment ticket.
 
@@ -376,7 +376,7 @@ resource "aws_iam_role_policy" "eso_read" {
 
 ### 5.3 ServiceAccount and SecretStore Manifests
 
-Prefer ServiceAccount manifests in `charts/` to version-control IAM bindings. Keep workload and ESO reader ServiceAccounts separate.
+Prefer storing ServiceAccount manifests in `charts/` so IAM bindings stay under version control. Keep workload and ESO reader ServiceAccounts separate.
 
 ```yaml
 apiVersion: v1
@@ -450,7 +450,7 @@ An approved administrator seeds each production secret once to create its first 
 
     As a backstop, the script sends a fixed version ID (`--client-request-token`) built from the ticket and secret name. Secrets Manager rejects a second overlapping write unless its value matches the first.
 
-    Save as `seed-secret.py`; replace placeholders with your approved command, resource names, and deployment ticket ID. Sign in to the password manager, then run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password; never put the password in the script. Captured output may hide sign-in prompts or errors.
+    Save as `seed-secret.py`; replace placeholders with your approved command, resource names, and deployment ticket ID. Sign in to the password manager, then run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password; never put the password in the script. Captured password-manager output may hide sign-in prompts or errors.
 
     ```python
     import json
@@ -715,7 +715,7 @@ kubectl delete pod secret-mount-check -n <namespace> --ignore-not-found
     Default Secret mode 0644 allows any UID to read the file. With 0400 and no `fsGroup`, non-root containers cannot read it: `test -s` passes for the existing, nonempty file, but `test -r` fails. This can resemble a mount failure. Set `defaultMode` and `fsGroup` explicitly, as above.
 
 !!! note "kubectl Compatibility"
-    `--for=jsonpath` requires kubectl 1.23 or later. The pod exits immediately, so `--for=condition=Ready` can miss success and time out. On older clients, poll: `kubectl get pod secret-mount-check -n <namespace> -o jsonpath='{.status.phase}'`.
+    `--for=jsonpath` requires kubectl 1.23 or later. The pod exits immediately, so `--for=condition=Ready` can miss a successful check and time out. On older clients, poll: `kubectl get pod secret-mount-check -n <namespace> -o jsonpath='{.status.phase}'`.
 
 **Pass criteria.** The pod reaches Succeeded, logs exactly `secret-mounted`, and is deleted. If admission rejects it, first align the manifest with the namespace's Pod Security level and resource controls; rejection does not establish a Secret problem.
 
@@ -815,7 +815,7 @@ argocd proj windows disable-manual-sync <project> <allow-window-id>
 # Leave both Applications on --sync-policy none until the mandatory Git revert merges.
 ```
 
-History rollback leaves resources added by the bad commit until Git revert syncs. If one causes the incident, review and approve every resource marked `ignored (requires pruning)` in step 4's output: `--prune` deletes all, including resources from other commits. Repeat step 4, adding `--prune` to `argocd app rollback` and replacing the health wait with `kubectl rollout status deployment/<service> -n <namespace>`. After pruning rollback, Argo CD versions earlier than 3.4 can report `Missing` until Git revert merges, preventing the health wait from returning.
+History rollback leaves resources added by the bad commit until Git revert syncs. If one causes the incident, review and approve every resource marked `ignored (requires pruning)` in step 4's output: `--prune` deletes all, including resources from other commits. Repeat step 4, adding `--prune` to `argocd app rollback` and replacing the health wait with `kubectl rollout status deployment/<service> -n <namespace>`. After a rollback with pruning, Argo CD versions earlier than 3.4 can report `Missing` until Git revert merges, preventing the health wait from returning.
 
 Restore Git and cluster consistency after the incident:
 
