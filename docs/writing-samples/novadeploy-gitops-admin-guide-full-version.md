@@ -42,14 +42,14 @@ Use this workflow for non-emergency production deployments.
 | Step | Action | What to Do | Stop Condition |
 | --- | --- | --- | --- |
 | 1 | Validate readiness | Check controller health, local tools, and guardrails before editing the deployment pull request (PR). | Stop if Argo CD, ESO, or Reloader is unhealthy. |
-| 2 | Change declared state | Update Helm values, Argo CD Application resources, ExternalSecret custom resources (CRs), or Terraform-owned IAM/KMS metadata. | Do not commit, paste, or type plaintext secrets into Git, a PR, or a shell. |
+| 2 | Change declared state | Update Helm values, Argo CD Application resources, ExternalSecret custom resources (CRs), or Terraform-owned IAM/KMS metadata. | No plaintext secrets; follow the Secret Handling Rule below. |
 | 3 | Open PR | Pass automated CI checks: lint, helm template, kubeconform, secret scan, and Reloader annotation guardrail. | Stop if any secret-consuming workload lacks the root Reloader annotation. |
 | 4 | Merge to main | Merge after approval; Argo CD watches main and reconciles the application. | No direct pushes or kubectl edits. |
 | 5 | Sync and verify | Wait for automated sync or run `argocd app sync <app-name>`; then run health, smoke, and secret-mount checks. | Do not use `--force` for normal deployment hotfixes. |
 | 6 | Close or recover | Close only after Synced/Healthy, successful smoke tests, and recorded non-secret evidence. | Default to Git revert; use Argo CD history only for approved service-level agreement (SLA) emergencies. |
 
 !!! info "Secret Handling Rule"
-    AWS Secrets Manager stores values; ESO syncs them into Kubernetes Secret objects at runtime. Never commit, paste, or type a plaintext secret value into any file, manifest, shell, or ticket.
+    AWS Secrets Manager stores values; ESO syncs them into Kubernetes Secret objects at runtime. Never commit, paste, or type plaintext secret values into files, manifests, or shells. Keep all secret values out of Git, PRs, ConfigMaps, literal environment variables, Terraform state, logs, chats, and tickets.
 
 ## 2. Deployment Guardrails
 
@@ -58,8 +58,8 @@ Apply these rules throughout the guide.
 | Guardrail | Required Evidence | Pass Criteria |
 | --- | --- | --- |
 | Git is source of truth | Protected main; all changes through PRs; CI passes before merge | Manual cluster drift is rejected or reverted by Argo CD self-heal. |
-| Terraform owns cloud controls | Terraform manages IAM roles, policies, KMS keys, Secrets Manager metadata, rotation config, and Lambda permissions | Use the AWS CLI for read-only checks of these resources. Direct CLI changes require approved break-glass procedures, then reconciliation with Terraform. |
-| No plaintext secrets | Secret scan, PR review, and no `aws_secretsmanager_secret_version` for production values | Secret values never enter Git, ConfigMaps, literal environment variables, Terraform state, PRs, logs, chats, or tickets. |
+| Terraform owns cloud controls | Terraform manages IAM roles, policies, KMS keys, Secrets Manager metadata, rotation config, and Lambda permissions | Use the AWS CLI only for read-only checks of these resources; direct changes to them require approved break-glass procedures, then reconciliation with Terraform. |
+| No plaintext secrets | Secret scan, PR review, and no `aws_secretsmanager_secret_version` for production values | Follow the Secret Handling Rule in Section 1. |
 | IRSA separation | Two IAM roles for service accounts (IRSA) per service: workload ServiceAccount has non-secret AWS permissions only; dedicated ESO reader ServiceAccount assumes `nova-<service>-eso-read` | Only ESO reads AWS Secrets Manager for service-scoped paths. |
 | Namespace-scoped SecretStore | ExternalSecret uses `secretStoreRef.kind: SecretStore` in the workload namespace | ClusterSecretStore for app secrets requires an approved platform exception. |
 | Reloader compatibility | Root workload metadata has `reloader.stakater.com/auto: "true"`; the Application sets `ignoreDifferences` for the Reloader annotation and `RespectIgnoreDifferences=true` | Reloader patches pod templates without Argo CD immediately removing its annotation. |
@@ -67,7 +67,7 @@ Apply these rules throughout the guide.
 
 ### 2.1 Rotation Readiness Gate
 
-Enable production rotation only after all checks pass in staging and the change receives production approval.
+Enable production rotation only after all staging checks pass and the change receives production approval.
 
 - Run the cluster health check in Section 4.2.
 - Confirm ESO can reconcile the target ExternalSecret and create/update the Kubernetes Secret.
@@ -138,7 +138,7 @@ flowchart TD
 
 ## 4. Prerequisites and Tooling
 
-Before opening a deployment PR, check compatibility with the versions pinned by the platform team in the infrastructure repository.
+Before opening a deployment PR, check compatibility with the platform team's pinned versions in the infrastructure repository.
 
 | Tool / Resource | Requirement | Purpose |
 | --- | --- | --- |
@@ -155,7 +155,7 @@ Before opening a deployment PR, check compatibility with the versions pinned by 
 
 ### 4.1 Local Tool Validation
 
-Check tools before editing the GitOps repository. Resolve any access or tooling failures before opening the PR.
+Check tools before editing the GitOps repository; resolve access or tooling failures before opening the PR.
 
 ```bash
 aws --version
@@ -168,9 +168,9 @@ python3 -c "import yaml; print('PyYAML available')"
 
 ### 4.2 Cluster Health Check
 
-Run before every release cycle; all controllers must be healthy before sync, rollback, or rotation. Save the block as a script and run with `bash`. If you paste the block into a live shell, `set -e` and `exit 1` close the session on the first failed check.
+Run before every release cycle; all controllers must be healthy before sync, rollback, or rotation. Save as a script and run with `bash`. If you paste the block into a live shell, `set -e` and `exit 1` close the session on the first failed check.
 
-The RBAC checks use `kubectl auth can-i --as` to test controller ServiceAccount permissions. Your operator or CI identity must be authorized to impersonate those accounts; most production operators should lack broad impersonation rights. Without permission, have a platform administrator or approved CI identity run the block and attach non-secret results to the deployment ticket.
+The RBAC checks test controller ServiceAccount permissions with `kubectl auth can-i --as`, which requires permission to impersonate those accounts. Most production operators should lack broad impersonation rights. Without permission, have a platform administrator or approved CI identity run the block and attach non-secret results to the deployment ticket.
 
 ```bash
 #!/usr/bin/env bash
@@ -277,7 +277,7 @@ The strategy check normalizes the `jsonpath` `args` array to match both `--reloa
 ## 5. IAM, KMS, SecretStore, and ESO Setup
 
 !!! info "Section Summary"
-    Create two narrowly scoped IRSA roles per service: workload and ESO reader. Their permissions are listed below. Terraform manages cloud resources; Kubernetes manifests bind the matching ServiceAccounts.
+    Create two narrowly scoped IRSA roles per service: workload and ESO reader. Terraform manages cloud resources; Kubernetes manifests bind the matching ServiceAccounts.
 
 ### 5.1 Role Model
 
@@ -433,7 +433,7 @@ spec:
 An approved administrator seeds each production secret once to create its first AWSCURRENT version. This is the only approved human write path. Terraform manages metadata, KMS policy, and rotation config; never use `aws_secretsmanager_secret_version` for production values (Section 2).
 
 !!! warning "Where Seeding Is Allowed to Happen"
-    If production secrets are forbidden on workstations, run the same commands through the PAM session broker, an approved bastion or jump host, or CI. CI must assume the seeding role through OIDC and read from the approved secret broker. Record the seeding path in the deployment ticket.
+    If production secrets are forbidden on workstations, run these commands through the PAM session broker, an approved bastion or jump host, or CI. CI must assume the seeding role through OIDC and read from the approved secret broker. Record the seeding path in the deployment ticket.
 
 1. A platform administrator confirms the initial value is available through the approved password manager or PAM workflow without displaying or copying it.
 
@@ -444,13 +444,13 @@ An approved administrator seeds each production secret once to create its first 
 
 3. Disable the AWS CLI's optional command history (`cli_history`) before seeding: `aws configure set cli_history disabled`. It records request parameters, including secret values, on the host. It is off by default; repeating this command is safe.
 
-    The script stops if the secret already has a value. It passes a single-line value from a successful password-manager CLI call to `put-secret-value` through standard input, creating the first AWSCURRENT version without writing plaintext to the filesystem.
+    The script stops if a value already exists. Otherwise, it passes a single-line value from a successful password-manager CLI call to `put-secret-value` through standard input, creating the first AWSCURRENT version without writing plaintext files.
 
     The initial check cannot prevent concurrent seeding. Assign one person or job per secret in the deployment ticket; only that assignee may run the script.
 
-    As a backstop, the script sends a fixed version ID (`--client-request-token`) built from the ticket and secret name. For overlapping seedings, Secrets Manager rejects a second write unless its value matches the first.
+    As a backstop, the script sends a fixed version ID (`--client-request-token`) built from the ticket and secret name. Secrets Manager rejects a second overlapping write unless its value matches the first.
 
-    Save as `seed-secret.py`; replace placeholders with your approved command, resource names, and deployment ticket ID. Sign in to the password manager, then run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password; never put the password in the script. Captured password-manager output may hide sign-in prompts or errors.
+    Save as `seed-secret.py`; replace placeholders with your approved command, resource names, and deployment ticket ID. Sign in to the password manager, then run `python3 seed-secret.py` on an approved Linux or macOS host. The password-manager command must output only the password; never put the password in the script. Captured output may hide sign-in prompts or errors.
 
     ```python
     import json
@@ -537,7 +537,7 @@ An approved administrator seeds each production secret once to create its first 
 
 ## 6. GitOps Repository Layout
 
-The GitOps repository below defines NovaDeploy cluster state. Application code lives in separate repositories.
+This GitOps repository defines NovaDeploy cluster state; application code lives in separate repositories.
 
 ```text
 nova-gitops/
@@ -621,7 +621,7 @@ spec:
 
 ### 7.1 Sync Windows
 
-The AppProject defines sync windows. Its matching `allow` window blocks automated and manual sync outside that schedule. An optional `deny` window can block periods within the schedule; nights and weekends need no separate deny window.
+The AppProject defines sync windows. The matching `allow` window blocks automated and manual sync outside its schedule; optional `deny` windows block periods within it. Nights and weekends need no separate deny window.
 
 | Window / State | Effect | Operator Action |
 | --- | --- | --- |
@@ -653,7 +653,7 @@ kubectl get secret <service>-app-secrets -n <namespace> \
 
 This disposable pod checks Secret mounting and readability, printing only `secret-mounted` on success. Removing any previous pod ensures fresh results; `&&` stops the sequence if removal or a later step fails.
 
-The manifest meets the restricted Pod Security profile and resource controls in `clusters/production/` (Section 7). These namespaces reject pods lacking `securityContext` or `resources` before attempting a mount. Run in the Secret's workload namespace; mounts cannot be checked across namespaces.
+The manifest meets the restricted Pod Security profile and resource controls in `clusters/production/` (Section 7). Pods lacking `securityContext` or `resources` are rejected before mounting. Run in the Secret's workload namespace; mounts cannot be checked across namespaces.
 
 ```bash
 kubectl delete pod secret-mount-check -n <namespace> --ignore-not-found &&
@@ -715,7 +715,7 @@ kubectl delete pod secret-mount-check -n <namespace> --ignore-not-found
     Default Secret mode 0644 allows any UID to read the file. With 0400 and no `fsGroup`, non-root containers cannot read it: `test -s` passes for the existing, nonempty file, but `test -r` fails. This can resemble a mount failure. Set `defaultMode` and `fsGroup` explicitly, as above.
 
 !!! note "kubectl Compatibility"
-    `--for=jsonpath` requires kubectl 1.23 or later. The pod exits immediately, so `--for=condition=Ready` can miss a successful check and time out. On older clients, poll: `kubectl get pod secret-mount-check -n <namespace> -o jsonpath='{.status.phase}'`.
+    `--for=jsonpath` requires kubectl 1.23 or later. The pod exits immediately, so `--for=condition=Ready` can miss success and time out. On older clients, poll: `kubectl get pod secret-mount-check -n <namespace> -o jsonpath='{.status.phase}'`.
 
 **Pass criteria.** The pod reaches Succeeded, logs exactly `secret-mounted`, and is deleted. If admission rejects it, first align the manifest with the namespace's Pod Security level and resource controls; rejection does not establish a Secret problem.
 
@@ -787,7 +787,7 @@ argocd proj windows disable-manual-sync <project> <allow-window-id>
 
 Use only when Git revert cannot meet the SLA deadline. Suspend any App-of-Apps root app managing child Application CRs during the approved incident window; otherwise, it may re-enable the child and re-sync the broken commit.
 
-During a GitHub outage, add `--validate=false` to both `argocd app set` commands below so Argo CD accepts changes without repository access. Rollback requires the last-good revision in Argo CD's manifest cache or local repository copy; a history entry alone is insufficient.
+During a GitHub outage, add `--validate=false` to both `argocd app set` commands below to allow changes without repository access. Rollback requires the last-good revision in Argo CD's manifest cache or local repository copy; a history entry alone is insufficient.
 
 1. Confirm Argo CD and the Kubernetes API are reachable.
 
@@ -954,3 +954,4 @@ The temporary file and `set -euo pipefail` stop the job before Python if `helm t
 | `<reloader-namespace>` | Namespace where Reloader runs | `reloader` |
 | `<reloader-deployment-name>` | Reloader Deployment name | `reloader` |
 | `<reloader-sa-name>` | Expected Reloader ServiceAccount name | `reloader` |
+

@@ -11,7 +11,7 @@ social:
 *Deploying Services to Amazon EKS with Argo CD*  
 Version 1.0 | Status: Portfolio cut | Written by: Jeff Slavin
 
-Use this runbook to release service changes, refresh secrets (such as passwords) without exposing them, and undo failed releases.
+This portfolio overview shows how to release services, refresh secrets (such as passwords) safely, and recover from failed releases.
 
 [Read the full runbook.](novadeploy-gitops-admin-guide-full-version.md)
 
@@ -73,7 +73,7 @@ Use this runbook to release service changes, refresh secrets (such as passwords)
 
 ## 3. Core Guardrails
 
-Apply these controls during deployment, verification, and recovery. The [full runbook](novadeploy-gitops-admin-guide-full-version.md) includes commands, Terraform examples, and emergency procedures.
+Apply these controls throughout deployment, verification, and recovery. See the [full runbook](novadeploy-gitops-admin-guide-full-version.md) for commands, Terraform examples, and emergency procedures.
 
 | Control | Rule | Why It Matters |
 | --- | --- | --- |
@@ -163,12 +163,12 @@ nova-gitops/
   .github/workflows/             # lint, render, kubeconform, secret scan, guardrails
 ```
 
-Argo CD watches protected `main`; self-healing corrects differences from Git. Sync windows must block routine syncs outside approved times unless an incident-approved manual-sync override is enabled.
+Argo CD watches protected `main`; self-healing corrects drift. Sync windows block routine syncs outside approved times unless an incident-approved manual-sync override is enabled.
 
 The cluster baseline pre-creates production namespaces; service Applications do not rely on `CreateNamespace=true`.
 
 !!! warning "Auto-Prune Boundary"
-    Automatic pruning deletes resources removed from Git. Before pruning, each deletion requires a PR showing the removal, passing CI, platform approval, and merge through protected `main`.
+    Automatic pruning deletes resources removed from Git. Each deletion requires a PR showing the removal, passing CI, platform approval, and merge through protected `main`.
 
     Enable `prune: true` only within the production AppProject and sync windows. Otherwise, a bad merge, wrong path, or unauthorized destination can trigger automatic deletion.
 
@@ -238,23 +238,9 @@ For the disposable mount-check pod and Reloader confirmation commands, see [Sect
 
 ## 7. Implementation Excerpt: CI Reloader Guardrail
 
-The CI check fails if any workload using secrets lacks the required Reloader annotation. The [full runbook](novadeploy-gitops-admin-guide-full-version.md#5-iam-kms-secretstore-and-eso-setup) includes ServiceAccount, SecretStore, IAM, and KMS examples and a [rotation readiness gate](novadeploy-gitops-admin-guide-full-version.md#21-rotation-readiness-gate).
+The Python core below checks rendered workloads for secret use and fails CI if the root Reloader annotation is missing. Pass the rendered YAML file as its first argument.
 
-```bash
-set -euo pipefail
-
-rendered="$(mktemp)"
-trap 'rm -f "$rendered"' EXIT
-
-release_name="<app-name>"          # Application.metadata.name
-target_namespace="<namespace>"     # Application.spec.destination.namespace
-
-helm template "${release_name}" charts/<service> \
-  --namespace "${target_namespace}" \
-  -f envs/production/values/<service>.yaml \
-  > "$rendered"
-
-python3 - "$rendered" <<'PY'
+```python
 import sys, yaml
 
 WORKLOADS = {"Deployment", "StatefulSet", "DaemonSet"}
@@ -285,17 +271,18 @@ if missing:
     print('ERROR: secret-consuming workloads missing reloader.stakater.com/auto="true":', file=sys.stderr)
     print("\n".join(f"  - {item}" for item in missing), file=sys.stderr)
     sys.exit(1)
-PY
 ```
 
-Use the Argo CD Application name as the Helm release name unless `source.helm.releaseName` overrides it. Match `--namespace` to `spec.destination.namespace`. The script checks restart requirements, not the full secret lifecycle.
+For Helm rendering and execution, use the [complete CI script](novadeploy-gitops-admin-guide-full-version.md#101-ci-reloader-annotation-guardrail). The check verifies annotations, not actual restarts or the full secret lifecycle.
+
+See the [ServiceAccount, SecretStore, IAM, and KMS examples](novadeploy-gitops-admin-guide-full-version.md#5-iam-kms-secretstore-and-eso-setup) and [rotation readiness gate](novadeploy-gitops-admin-guide-full-version.md#21-rotation-readiness-gate) for setup and runtime checks.
 
 ---
 
 ## 8. Rollback Matrix
 
 !!! warning "Rollback Principle"
-    Use Git revert by default to keep Git authoritative and preserve an audit trail. Reserve Argo CD history rollback for approved emergencies (break-glass), followed by a Git revert within 24 hours.
+    Default to Git revert to keep Git authoritative and preserve an audit trail. Reserve Argo CD history rollback for approved emergencies (break-glass), followed by Git revert within 24 hours.
 
 | Scenario | Strategy | Operator Note |
 | --- | --- | --- |
@@ -325,3 +312,4 @@ For Argo CD history rollback:
 6. Keep both suspended until the matching Git revert merges, then restore their prior sync policies.
 
 The `argocd app get` and `argocd app set` commands for steps 1 and 6 are in [Section 9.2 of the full runbook](novadeploy-gitops-admin-guide-full-version.md#92-argo-cd-history-rollback).
+
