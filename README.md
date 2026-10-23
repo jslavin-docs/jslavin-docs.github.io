@@ -21,7 +21,8 @@ API documentation · OpenAPI · SDK documentation · Information architecture ·
 - **MkDocs Material** — custom theme configuration, navigation tabs, admonitions, code copy, and permalink anchors.
 - **Custom CSS** — hero layout, metric cards, portfolio grid, and skill cards.
 - **CI/CD and documentation QA** — on every push to `main` and every pull request, GitHub Actions runs `mkdocs build --strict`, an internal link check, and the pinned Nu HTML Checker. Any failure blocks the deploy. A Lighthouse audit also runs but never blocks. Pull requests aren't deployed.
-- **AI-retrieval artifacts** — `llms.txt` is a hand-written index. On every build, `hooks.py` generates `llms-full.txt` and Markdown versions of every page, and copies a raw `skill.md` (the agent skill file), so LLM-based tools can read the site content.
+- **AI-retrieval artifacts** — files that let AI tools read the site. `llms.txt` is a hand-written index. On every build, `hooks.py` adds `llms-full.txt` (all page text in one file) and a Markdown copy of every page, and copies `skill.md`, the agent skill file, unchanged.
+- **Accessibility** — on every build, `hooks.py` also improves screen-reader labels and keyboard access, and fixes theme HTML errors.
 
 ## Repository structure
 
@@ -42,7 +43,7 @@ jslavin-docs.github.io/
 │   ├── check_internal_links.py   # Internal link checker run in CI
 │   └── render_diagram.py         # Regenerate the shared NovaDeploy SVG
 ├── mkdocs.yml                    # MkDocs Material configuration
-├── hooks.py                      # Pre-rendered diagram and AI export build hooks
+├── hooks.py                      # Diagram, AI export, and accessibility build hooks
 ├── skill.md                      # Agent skill file, served raw at /skill.md
 ├── requirements.txt              # Python dependencies
 ├── .lighthouserc.json            # Lighthouse CI audit thresholds
