@@ -5,7 +5,7 @@
 **Lead Technical Writer**  
 API · Cloud · Edge · IoT · GitOps · DevSecOps · Docs as Code
 
-This repository contains the source for my technical writing portfolio, built with MkDocs Material and published with GitHub Pages. It demonstrates the same Docs as Code practices I use professionally: Markdown authoring, YAML configuration, Git version control, GitHub Actions automation, and strict builds plus internal link and HTML checks in CI.
+This repository is the source for my technical writing portfolio, built with MkDocs Material and published to GitHub Pages with the Docs as Code workflow I use professionally: Markdown, YAML, Git, and GitHub Actions.
 
 - **Live portfolio:** https://jslavin-docs.github.io/
 - **Resume:** https://jslavin-docs.github.io/resume/
@@ -18,13 +18,10 @@ API documentation · OpenAPI · SDK documentation · Information architecture ·
 
 ## What this repo demonstrates
 
-- **MkDocs Material** — custom theme configuration, navigation tabs, admonitions, code copy, and permalink anchors
-- **Custom CSS** — hero layout, metric cards, portfolio grid, and skill cards layered on top of the Material theme
-- **GitHub Actions CI/CD** — a combined build-and-quality job and a separate advisory audit on every push to `main` and every pull request; deployment publishes the checked site only after the quality job passes and is skipped for pull requests
-- **GitHub Pages** — static-site publishing for a public technical writing portfolio
-- **Docs as Code workflow** — content authored in Markdown, configuration managed in YAML, and version-controlled in Git
-- **AI-retrieval artifacts** — `llms.txt` (a hand-written index that MkDocs copies as is) and, generated on every build by the MkDocs hook in `hooks.py`, `llms-full.txt`, Markdown versions of every page, and a raw copy of the agent instruction file (`skill.md`) expose the site content to LLM-based tools
-- **Documentation QA** — `mkdocs build --strict`, an internal link check, and the pinned Nu HTML Checker run in CI; build warnings, failed internal link checks, and HTML errors block the deploy. The HTML check ignores warnings and excludes Google's verification file. A Lighthouse audit also runs on every push, but it is advisory only and never blocks the deploy.
+- **MkDocs Material** — custom theme configuration, navigation tabs, admonitions, code copy, and permalink anchors.
+- **Custom CSS** — hero layout, metric cards, portfolio grid, and skill cards.
+- **CI/CD and documentation QA** — on every push to `main` and every pull request, GitHub Actions runs `mkdocs build --strict`, an internal link check, and the pinned Nu HTML Checker. Any failure blocks the deploy. A Lighthouse audit also runs but never blocks. Pull requests aren't deployed.
+- **AI-retrieval artifacts** — `llms.txt` is a hand-written index. On every build, `hooks.py` generates `llms-full.txt` and Markdown versions of every page, and copies a raw `skill.md` (the agent skill file), so LLM-based tools can read the site content.
 
 ## Repository structure
 
@@ -106,12 +103,12 @@ python scripts/check_internal_links.py site
 
 ## Update the NovaDeploy diagram
 
-Both NovaDeploy samples use a shared SVG generated from their Mermaid blocks, so visitors' browsers do not need to generate the diagram. The original Mermaid source remains in the Markdown files and AI exports.
+Both NovaDeploy samples share one SVG generated from their Mermaid blocks, so visitors' browsers don't have to draw it. AI exports keep the Mermaid source.
 
-After updating the Mermaid block in both samples, keep the blocks identical and regenerate the SVG and its metadata:
+Edit the Mermaid block in both samples so the two stay identical, then regenerate the SVG and its metadata:
 
 ```bash
 python scripts/render_diagram.py
 ```
 
-Regeneration requires Node.js and uses Mermaid CLI 11.17.0. Normal site builds use the checked-in SVG and do not require Node.js. Commit the updated Markdown, SVG, and JSON metadata together; the build rejects a diagram that no longer matches its source.
+This requires Node.js and uses Mermaid CLI 11.17.0. Normal builds use the checked-in SVG and don't need Node.js. Commit both Markdown files, the SVG, and its JSON metadata together. The build fails if the diagram no longer matches its source.
