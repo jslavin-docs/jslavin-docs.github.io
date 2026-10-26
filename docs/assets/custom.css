@@ -700,3 +700,50 @@ html:has(.md-content :focus-visible) .md-typeset :target { --md-scroll-margin: 1
 
 /* The PDF button has no purpose on paper. */
 @media print { .md-typeset .md-button { display: none; } }
+
+/* Accessibility: the contents list keeps its "Table of contents" title pinned at the top while it
+   scrolls, so Shift+Tab could land on a link hidden under the title or its white shadow (WCAG 2.2,
+   2.4.11). Reserve room for the title and its shadow. */
+.md-sidebar--secondary .md-sidebar__scrollwrap { scroll-padding-top: 1.8rem; }
+
+/* Accessibility: "Back to top" appears when the page scrolls up and can cover the link that keyboard
+   focus moves to next (WCAG 2.2, 2.4.11). Hide it while Tab navigation is in the page content;
+   keyboard users can press Home instead. The helper sets data-tabbing on Tab and clears it on any
+   pointer press, so a mouse user who presses another key keeps the button. */
+html[data-tabbing]:has(.md-content :focus-visible) .md-top { visibility: hidden; }
+
+/* Accessibility: below 720px top-level code blocks run edge to edge, so the focus ring drawn outside
+   them lands off screen or under the header (WCAG 2.2, 2.4.7). Also draw one just inside the code.
+   Blocks nested in lists keep their margins and their outer ring, so they are left alone. */
+@media screen and (max-width: 44.984375em) {
+  .md-content__inner > pre > code:focus-visible,
+  .md-content__inner > .highlight > pre > code:focus-visible {
+    outline: 2px solid var(--md-primary-fg-color);
+    outline-offset: -2px;
+  }
+}
+
+/* Accessibility: search previews quoting a long code line scrolled sideways where keyboard focus
+   cannot reach them (WCAG 2.2, 2.1.1). Wrap them instead. break-word is for Safari before 15.4. */
+.md-search-result pre > code {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Accessibility: once the page scrolls 10px, the theme fades the tab bar out, yet keyboard focus can
+   still land on its links, sometimes under the header (WCAG 2.2, 2.4.7 and 2.4.11). While a tab has
+   keyboard focus, or is being clicked, keep the bar clear of the header and show it as it normally
+   looks: current tab at full strength, the others at 0.75, and clickable. Mouse focus left on a tab
+   (Ctrl+click, Back) still fades as before. Skipping the theme's delayed slide keeps the browser
+   from measuring the link 9px low and leaving the top of its focus ring under the header. */
+html:has(.md-tabs :focus-visible) { scroll-padding-top: 2.8rem; }
+.md-tabs[hidden]:is(:has(:focus-visible), :has(:active)) { pointer-events: auto; }
+.md-tabs[hidden]:is(:has(:focus-visible), :has(:active)) .md-tabs__link {
+  opacity: .75;
+  transform: none;
+  transition: opacity .1s;
+}
+.md-tabs[hidden]:is(:has(:focus-visible), :has(:active)) :is(.md-tabs__item--active .md-tabs__link, .md-tabs__link:focus, .md-tabs__link:hover) {
+  opacity: 1;
+}

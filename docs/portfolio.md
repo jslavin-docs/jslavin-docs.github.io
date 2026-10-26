@@ -56,8 +56,8 @@ Selected technical writing samples covering GitOps, DevSecOps, APIs, developer o
     <span class="card-tag">Quick start · GCP IoT Core migration</span>
     <h3>Quick Start Guide – ClearBlade IoT Core</h3>
     <p>Authored a step-by-step quick start with code samples and telemetry testing as part of the migration guides for 250+ GCP IoT Core customers who moved to ClearBlade, cutting support tickets by 30%.</p>
-    <a class="card-link" href="https://docs.clearblade.com/iotcore/quick-start" target="_blank" rel="noopener">Read sample <span class="inline-arrow" aria-hidden="true"></span></a>
-    <a class="card-link" href="../case-studies/gcp-iot-core-migration/">Read case study <span class="inline-arrow" aria-hidden="true"></span></a>
+    <a class="card-link" href="https://docs.clearblade.com/iotcore/quick-start" target="_blank" rel="noopener" aria-label="Read sample: ClearBlade IoT Core quick start">Read sample <span class="inline-arrow" aria-hidden="true"></span></a>
+    <a class="card-link" href="../case-studies/gcp-iot-core-migration/" aria-label="Read case study: GCP IoT Core migration">Read case study <span class="inline-arrow" aria-hidden="true"></span></a>
   </div>
 </div>
 

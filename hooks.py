@@ -22,9 +22,10 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
    link on every page, including the 404 page. The site does not show
    star, fork, or release numbers, so the lookup was an unused request
    to the GitHub API. The "GitHub" link itself is unchanged.
-7. Adds accessible mobile controls and search status messages, gives the
-   404 page a descriptive title, and publishes a small cached helper for
-   keyboard operation, focus handling, and disabling character shortcuts.
+7. Adds accessible mobile controls and search and copy-confirmation status
+   messages, gives the 404 page a descriptive title, and publishes a small
+   cached helper for keyboard operation, focus handling, announcing copies,
+   and disabling character shortcuts.
 8. Keeps overflowing code samples keyboard-focusable on touch devices and
    after fonts load, and removes navigation semantics from copy controls.
 9. Turns the "Table of contents" title in the TOC sidebar into plain text
@@ -449,6 +450,16 @@ def _add_web_accessibility(html: str, source: str, helper_url: str) -> str:
     html = _replace_once(
         html, '<div class="md-search-result__meta">',
         '<div class="md-search-result__meta" role="status" aria-live="polite" aria-atomic="true">', source)
+    # The theme's "Copied to clipboard" box is a status message too. The empty region before it
+    # lets the helper announce each copy once; the helper hides the box only once that works.
+    # The region is visually hidden inline, so a stylesheet cached from before this change can't
+    # show its text.
+    html = _replace_once(
+        html, '<div class="md-dialog" data-md-component="dialog">',
+        '<div id="site-status" role="status" aria-live="polite" aria-atomic="true" style="position:absolute;'
+        'width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap"></div>\n'
+        '    <div class="md-dialog" data-md-component="dialog" role="status" aria-live="polite" aria-atomic="true">',
+        source)
     html = _replace_once(html, '<div class="md-search__output">',
                          '<div class="md-search__output" inert>', source)
     html = _replace_once(
@@ -670,6 +681,34 @@ _ACCESSIBILITY_SCRIPT = r"""
       document.fonts.addEventListener("loadingdone", scheduleCodeSync);
     }
   }
+
+  // The theme writes "Copied to clipboard" into its box again when the box hides, which a
+  // screen reader can take for a second copy. Announce each copy once from a separate region,
+  // cleared in between, and hide the theme's box only once this is running, so that if the
+  // theme stops providing alert$ the box (itself a status message) still speaks.
+  const copyStatus = document.getElementById("site-status");
+  const copyDialog = document.querySelector('[data-md-component="dialog"]');
+  if (copyStatus && copyDialog && window.alert$?.subscribe) {
+    let copyTimer = 0;
+    window.alert$.subscribe(message => {
+      clearTimeout(copyTimer);
+      copyStatus.textContent = "";
+      copyTimer = setTimeout(() => {
+        copyStatus.textContent = message;
+        copyTimer = setTimeout(() => { copyStatus.textContent = ""; }, 3000);
+      }, 250);
+    });
+    copyDialog.setAttribute("aria-hidden", "true");
+  }
+
+  // custom.css hides "Back to top" only during Tab navigation. Chromium also treats any key press
+  // after a mouse click as keyboard use, so track Tab itself and clear it on pointer presses.
+  // (WebKit on Linux reports Shift+Tab as an unidentified key with code "Tab".)
+  addEventListener("keydown", event => {
+    const tab = event.key === "Tab" || (event.key === "Unidentified" && event.code === "Tab");
+    if (tab) document.documentElement.dataset.tabbing = "";
+  }, true);
+  addEventListener("pointerdown", () => { delete document.documentElement.dataset.tabbing; }, true);
 
   const search = document.getElementById("__search");
   const drawer = document.getElementById("__drawer");
