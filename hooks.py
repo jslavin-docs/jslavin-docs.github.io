@@ -849,6 +849,15 @@ _ACCESSIBILITY_SCRIPT = r"""
     if (tab && !event.isComposing && !event.ctrlKey && !event.metaKey &&
         search.checked && panel.contains(event.target)) {
       event.stopPropagation();
+      // Below 60em the search covers the page and the theme locks scrolling, so
+      // Tab's next stop would get focus off screen. Leave as Escape does instead.
+      // Shift+Tab's stop is the Search button, which the browser keeps in view.
+      if (!desktopSearch.matches && !event.shiftKey) {
+        event.preventDefault();
+        close(search);
+        returnFromSearch();
+        return;
+      }
       if (event.target !== query) query.focus({ preventScroll: true });
       close(search);
       // If Tab had nowhere to go and the field kept focus, open the search again.
