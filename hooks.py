@@ -43,10 +43,11 @@ Runs automatically during `mkdocs build` (including --strict CI builds):
    advances on the first deploy of each new year without an edit.
 
 Both exports are cleaned before they are written: presentation-only
-attribute lists are removed and raw HTML layout blocks are converted
-back to Markdown, so agents receive prose and not markup. Relative links are
-resolved to absolute URLs so they work from any location the export is
-read in.
+attribute lists are removed, raw HTML layout blocks are converted back to
+Markdown, and MkDocs note boxes (!!! and ???) become standard block quotes,
+so agents receive prose and not markup. Relative links, including links to a
+section of the same page, are resolved to absolute URLs so they work from any
+location the export is read in.
 
 docs/llms.txt (the curated index) is a plain static file that MkDocs
 copies through on its own; no hook is needed for it.
@@ -99,6 +100,16 @@ HTML_BLOCK = re.compile(
 )
 # Markdown links and images with a relative destination.
 RELATIVE_LINK = re.compile(r"(!?\[[^\]]*\]\()(?!\w+:|#|/)([^)\s]+)(\))")
+# Markdown links to a section of the same page.
+FRAGMENT_LINK = re.compile(r"(!?\[[^\]]*\]\()(#[^)\s]+)(\))")
+# MkDocs note box headers, e.g. !!! warning "Title" or ??? abstract "Title".
+BOX_HEADER = re.compile(
+    r'^(?P<indent>[ \t]*)(?:!!!|\?\?\?\+?)[ \t]+(?P<kind>[\w-]+)'
+    r'(?:[ \t]+[\w-]+)*(?:[ \t]+"(?P<title>[^"]*)")?[ \t]*$'
+)
+# Box types whose name tells the reader how much the content matters.
+SEVERITY_KINDS = {"attention", "bug", "caution", "danger", "error", "failure", "warning"}
+FENCE_LINE = re.compile(r"^[ \t]*(```|~~~)")
 
 
 def on_config(config):
@@ -179,20 +190,79 @@ def _unwrap_cards(html: str) -> str:
         for span in anchor.find_all("span", class_="card-link"):
             span.decompose()
         anchor.unwrap()
+    # A group of card links or buttons would convert onto adjacent lines,
+    # which Markdown joins into one. List them instead.
+    grouped = ["card-link", "button"]
+    for card in {id(link.parent): link.parent
+                 for link in soup.find_all("a", class_=grouped)}.values():
+        links = card.find_all("a", class_=grouped, recursive=False)
+        if len(links) < 2:
+            continue
+        items = soup.new_tag("ul")
+        links[0].insert_before(items)
+        for link in links:
+            item = soup.new_tag("li")
+            item.append(link.extract())
+            items.append(item)
     return str(soup)
 
 
 def _html_to_markdown(match: re.Match) -> str:
     converted = markdownify(
-        _unwrap_cards(match.group(0)), heading_style="ATX", strip=["img"]
+        _unwrap_cards(match.group(0)), heading_style="ATX", strip=["img"], bullets="-"
     )
     return re.sub(r"\n{3,}", "\n\n", converted).strip() + "\n"
+
+
+def _convert_boxes(text: str) -> str:
+    """Turn MkDocs note boxes into standard Markdown block quotes.
+
+    Other Markdown tools don't know the !!! and ??? syntax: they print the
+    header as text and show the box's indented body as a code block. A quote
+    keeps the box's title and grouping in syntax every renderer understands.
+    Boxes nested in list items or in other boxes keep their place.
+    """
+    lines = text.split("\n")
+    out = []
+    fence = None
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        marker = FENCE_LINE.match(line)
+        header = None if fence or marker else BOX_HEADER.match(line)
+        if header is None:
+            if fence and marker and marker.group(1) == fence:
+                fence = None
+            elif not fence and marker:
+                fence = marker.group(1)
+            out.append(line)
+            i += 1
+            continue
+
+        indent = header["indent"]
+        body_indent = indent + "    "
+        end = i + 1
+        while end < len(lines) and (not lines[end].strip() or lines[end].startswith(body_indent)):
+            end += 1
+        while end > i + 1 and not lines[end - 1].strip():
+            end -= 1
+        body = _convert_boxes("\n".join(row[len(body_indent):] for row in lines[i + 1:end]))
+
+        kind = header["kind"].lower()
+        title = kind.capitalize() if header["title"] is None else header["title"]
+        if title and kind in SEVERITY_KINDS and title.lower() != kind:
+            title = f"{kind.capitalize()}: {title}"
+        quoted = ([f"**{title}**", ""] if title else []) + body.split("\n")
+        out.extend(indent + (">" if not part.strip() else "> " + part) for part in quoted)
+        i = end
+    return "\n".join(out)
 
 
 def _clean(text: str) -> str:
     """Strip presentation markup so the export is prose, not layout."""
     text = ATTR_LIST.sub("", text)
     text = HTML_BLOCK.sub(_html_to_markdown, text)
+    text = _convert_boxes(text)
     return re.sub(r"\n{3,}", "\n\n", text).strip() + "\n"
 
 
@@ -201,7 +271,11 @@ def _absolutize(text: str, site_url: str, rel_path: str) -> str:
 
     Relative targets are resolved against the source file's folder, not
     the published page URL, and a .md target becomes its clean page URL.
+    A link to a section of the same page gets that page's URL, so it still
+    points to the right page inside llms-full.txt.
     """
+    page_url = _page_url(site_url, rel_path)
+    text = FRAGMENT_LINK.sub(lambda m: m.group(1) + page_url + m.group(2) + m.group(3), text)
     parent = str(PurePosixPath(rel_path).parent)
     base = site_url + ("" if parent == "." else parent + "/")
 
